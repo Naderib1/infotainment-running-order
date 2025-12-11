@@ -13,7 +13,7 @@ export function useSupabaseData(initialData: AppData) {
 
   // Load data from Supabase
   const loadData = useCallback(async () => {
-    if (!user || !isConfigured || !supabase) {
+    if (!user || !isConfigured) {
       setLoading(false)
       return
     }
@@ -45,7 +45,7 @@ export function useSupabaseData(initialData: AppData) {
   const saveData = useCallback(async (newData: AppData) => {
     setData(newData)
 
-    if (!user || !isConfigured || !supabase) {
+    if (!user || !isConfigured) {
       return
     }
 

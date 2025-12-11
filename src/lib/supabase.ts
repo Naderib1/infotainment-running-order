@@ -1,24 +1,11 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
+// Hardcoded Supabase credentials for reliable deployment
+const supabaseUrl = 'https://kklqnpbckomxdglkjdlv.supabase.co'
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrbHFucGJja29teGRnbGtqZGx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0NDk4MjEsImV4cCI6MjA4MTAyNTgyMX0.nGnMNXjiFmxzDGzgJvvpgwG1V9TASz8Dn0cws0gyE4U'
 
-// Check if Supabase is configured
-export const isSupabaseConfigured = () => {
-  return supabaseUrl !== '' && supabaseAnonKey !== '' && supabaseUrl.startsWith('http')
-}
+// Supabase is always configured now
+export const isSupabaseConfigured = () => true
 
-// Only create client if configured, otherwise create a dummy that won't be used
-let supabaseClient: SupabaseClient | null = null
-
-if (isSupabaseConfigured()) {
-  try {
-    supabaseClient = createClient(supabaseUrl, supabaseAnonKey)
-  } catch (e) {
-    console.warn('Failed to create Supabase client:', e)
-    supabaseClient = null
-  }
-}
-
-// Export a safe getter
-export const supabase = supabaseClient as SupabaseClient
+// Create the Supabase client
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
