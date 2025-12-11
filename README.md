@@ -53,3 +53,4 @@ This project is configured for easy deployment on Railway:
 - Vite
 - Tailwind CSS
 - Shadcn/ui components
+
