@@ -1,0 +1,229 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 94.1%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply backdrop-blur-md bg-white/10 border border-white/20 rounded-xl shadow-xl;
+  }
+  
+  .glass-dark {
+    @apply backdrop-blur-md bg-black/10 border border-white/10 rounded-xl shadow-xl;
+  }
+
+  .gradient-border {
+    position: relative;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+    border-radius: 12px;
+  }
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+    padding: 1px;
+    background: linear-gradient(135deg, #667eea, #764ba2, #f093fb, #f5576c);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: xor;
+    -webkit-mask-composite: xor;
+  }
+
+.animate-shimmer {
+  background-size: 200% 200%;
+  animation: shimmer 2s linear infinite;
+}
+
+}
+
+#print-export-view {
+  display: none;
+}
+
+body.print-running-order {
+  background: white !important;
+  font-size: 12px;
+}
+
+body.print-running-order .app-shell {
+  display: none !important;
+}
+
+body.print-running-order .app-nav-toggle {
+  display: none !important;
+}
+
+.app-nav-toggle {
+  print-color-adjust: exact;
+}
+
+@media print {
+  .app-nav-toggle {
+    display: none !important;
+    visibility: hidden !important;
+  }
+}
+
+body.print-running-order #print-export-view {
+  display: block !important;
+  position: static !important;
+  transform: none !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  pointer-events: auto;
+  z-index: 0 !important;
+  padding: 0 !important;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+@page {
+  size: A4;
+  margin: 10mm 8mm;
+}
+
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    box-sizing: border-box !important;
+  }
+
+  body.print-running-order {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  body.print-running-order #print-export-view {
+    padding: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+  }
+
+  body.print-running-order #print-export-view .cover-page {
+    width: 210mm !important;
+    height: 297mm !important;
+    max-height: 297mm !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+  }
+
+  body.print-running-order #print-export-view .category-section {
+    display: block !important;
+    page-break-before: always !important;
+    break-before: page !important;
+    padding-top: 8mm !important;
+    padding-bottom: 8mm !important;
+    margin: 0 !important;
+  }
+
+  body.print-running-order #print-export-view .running-order-card {
+    display: block !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin-bottom: 5mm !important;
+    box-shadow: none !important;
+  }
+
+  body.print-running-order #print-export-view .running-order-card > * {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  body.print-running-order #print-export-view .category-banner {
+    display: block !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    margin-bottom: 5mm !important;
+  }
+
+  body.print-running-order #print-export-view .glass-card {
+    background: white !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
