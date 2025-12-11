@@ -49,12 +49,11 @@ export function Auth({ mode = 'full' }: AuthProps) {
     }
   }
 
-  // Link mode: just show a small admin login button
+  // Link mode: show a visible admin login button
   if (mode === 'link') {
     return (
       <button
         onClick={() => {
-          // Open login modal or redirect - for now just show prompt
           const email = prompt('Admin Email:')
           const password = prompt('Password:')
           if (email && password) {
@@ -63,9 +62,9 @@ export function Auth({ mode = 'full' }: AuthProps) {
             })
           }
         }}
-        className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 transition"
+        className="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white text-sm rounded-lg shadow-lg transition"
       >
-        <Shield className="h-3 w-3" />
+        <Shield className="h-4 w-4" />
         Admin Login
       </button>
     )
