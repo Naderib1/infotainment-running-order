@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { CompetitionSetup } from './components/CompetitionSetup'
 import { RunningOrderTemplate } from './components/RunningOrderTemplate'
-import { PublicUserView } from './components/PublicUserView'
 import { Auth } from './components/Auth'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { useSupabaseData } from './hooks/useSupabaseData'
@@ -198,21 +197,31 @@ function AppContent() {
     )
   }
 
-  // PUBLIC USER MODE: Show simplified view if not logged in
+  // PUBLIC USER MODE: Use the same RunningOrderTemplate but in read-only mode
   if (!user && template) {
     return (
-      <>
-        <PublicUserView
+      <div className="min-h-screen">
+        {/* Admin login link at bottom */}
+        <div className="fixed bottom-4 right-4 z-50 print:hidden">
+          <Auth mode="link" />
+        </div>
+        
+        <RunningOrderTemplate
           competition={template.competition}
           runningOrder={template.runningOrder}
           categories={template.categories}
-          loading={false}
+          selectedVenue={template.selectedVenue}
+          matchConfig={template.matchConfig}
+          onUpdateRunningOrder={() => {}}
+          onUpdateCategories={() => {}}
+          onVenueChange={() => {}}
+          onMatchConfigChange={() => {}}
+          onCompetitionChange={() => {}}
+          onResetAllData={() => {}}
+          onBack={() => {}}
+          readOnly={true}
         />
-        {/* Admin login link at bottom */}
-        <div className="fixed bottom-4 right-4 print:hidden">
-          <Auth mode="link" />
-        </div>
-      </>
+      </div>
     )
   }
   

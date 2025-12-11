@@ -43,6 +43,7 @@ interface RunningOrderTemplateProps {
   onCompetitionChange: (competition: Competition) => void
   onResetAllData: (data: { competition: Competition; runningOrder: RunningOrderItem[]; categories: RunningOrderCategory[]; selectedVenue: string; matchConfig: MatchConfig }) => void
   onBack: () => void
+  readOnly?: boolean
 }
 
 export function RunningOrderTemplate({
@@ -57,7 +58,8 @@ export function RunningOrderTemplate({
   onMatchConfigChange,
   onCompetitionChange,
   onResetAllData,
-  onBack
+  onBack,
+  readOnly = false
 }: RunningOrderTemplateProps) {
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [addDialogCategoryId, setAddDialogCategoryId] = useState<string | undefined>(undefined)
@@ -918,14 +920,16 @@ export function RunningOrderTemplate({
           </CardContent>
         </Card>
 
-        {/* Category Management */}
-        <div className="mb-8">
-          <CategoryManager
-            categories={categories}
-            runningOrderCountByCategory={itemsPerCategory}
-            onUpdateCategories={onUpdateCategories}
-          />
-        </div>
+        {/* Category Management - Admin only */}
+        {!readOnly && (
+          <div className="mb-8">
+            <CategoryManager
+              categories={categories}
+              runningOrderCountByCategory={itemsPerCategory}
+              onUpdateCategories={onUpdateCategories}
+            />
+          </div>
+        )}
 
         {/* Running Order Management */}
         <Card className="glass-card border-0 mb-8">
@@ -937,56 +941,58 @@ export function RunningOrderTemplate({
                   Manage your competition running order timeline
                 </CardDescription>
               </div>
-              <div className="flex items-center gap-2">
-                {/* Save Template Button */}
-                  <Button
-                    onClick={saveTemplate}
-                    variant="gradient"
-                    className="flex items-center gap-2"
-                  >
-                    <Save className="h-4 w-4" />
-                    Save Template
-                  </Button>
-                
-                {/* Load Template Button */}
-                  <input
-                  ref={loadTemplateInputRef}
-                    type="file"
-                    accept=".json"
-                    onChange={loadTemplate}
-                  className="hidden"
-                  />
-                  <Button
-                  onClick={handleLoadTemplateClick}
-                    variant="outline"
-                    className="flex items-center gap-2"
-                  >
-                      <FolderOpen className="h-4 w-4" />
-                      Load Template
-                  </Button>
+              {!readOnly && (
+                <div className="flex items-center gap-2">
+                  {/* Save Template Button */}
+                    <Button
+                      onClick={saveTemplate}
+                      variant="gradient"
+                      className="flex items-center gap-2"
+                    >
+                      <Save className="h-4 w-4" />
+                      Save Template
+                    </Button>
+                  
+                  {/* Load Template Button */}
+                    <input
+                    ref={loadTemplateInputRef}
+                      type="file"
+                      accept=".json"
+                      onChange={loadTemplate}
+                    className="hidden"
+                    />
+                    <Button
+                    onClick={handleLoadTemplateClick}
+                      variant="outline"
+                      className="flex items-center gap-2"
+                    >
+                        <FolderOpen className="h-4 w-4" />
+                        Load Template
+                    </Button>
 
-                {/* Reset to Default Button */}
-                <Button
-                  onClick={resetToDefault}
-                  variant="outline"
-                  className="flex items-center gap-2 text-amber-600 border-amber-300 hover:bg-amber-50"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                  Reset to Default
-                </Button>
-                
-                <Button
-                  onClick={() => {
-                    setAddDialogCategoryId(undefined)
-                    setAddDialogOpen(true)
-                  }}
-                  variant="gradient"
-                  disabled={categories.length === 0}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Item
-                </Button>
-              </div>
+                  {/* Reset to Default Button */}
+                  <Button
+                    onClick={resetToDefault}
+                    variant="outline"
+                    className="flex items-center gap-2 text-amber-600 border-amber-300 hover:bg-amber-50"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    Reset to Default
+                  </Button>
+                  
+                  <Button
+                    onClick={() => {
+                      setAddDialogCategoryId(undefined)
+                      setAddDialogOpen(true)
+                    }}
+                    variant="gradient"
+                    disabled={categories.length === 0}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Item
+                  </Button>
+                </div>
+              )}
             </div>
             {categories.length === 0 && (
               <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
@@ -1007,6 +1013,7 @@ export function RunningOrderTemplate({
                   setAddDialogCategoryId(categoryId)
                   setAddDialogOpen(true)
                 }}
+                readOnly={readOnly}
               />
             ) : (
               <RunningOrderTable
