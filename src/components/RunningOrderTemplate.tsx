@@ -448,21 +448,21 @@ export function RunningOrderTemplate({
 
   const saveTemplate = () => {
     try {
-      const templateData = {
-        competition,
-        runningOrder,
-        categories,
-        selectedVenue,
-        matchConfig,
-        version: '1.0',
-        createdAt: new Date().toISOString()
-      }
-      
-      const jsonContent = JSON.stringify(templateData, null, 2)
+    const templateData = {
+      competition,
+      runningOrder,
+      categories,
+      selectedVenue,
+      matchConfig,
+      version: '1.0',
+      createdAt: new Date().toISOString()
+    }
+    
+    const jsonContent = JSON.stringify(templateData, null, 2)
       // Sanitize filename - remove special characters
       const safeName = (competition.name1 || 'Running Order').replace(/[^a-zA-Z0-9\s-]/g, '').trim()
       const filename = `${safeName} - Running Order Template.json`
-      downloadFile(jsonContent, filename, 'application/json')
+    downloadFile(jsonContent, filename, 'application/json')
       
       // Show success feedback
       alert(`Template saved successfully!\nFilename: ${filename}`)
@@ -900,31 +900,31 @@ export function RunningOrderTemplate({
               </div>
               <div className="flex items-center gap-2">
                 {/* Save Template Button */}
-                <Button
-                  onClick={saveTemplate}
-                  variant="gradient"
-                  className="flex items-center gap-2"
-                >
-                  <Save className="h-4 w-4" />
-                  Save Template
-                </Button>
+                  <Button
+                    onClick={saveTemplate}
+                    variant="gradient"
+                    className="flex items-center gap-2"
+                  >
+                    <Save className="h-4 w-4" />
+                    Save Template
+                  </Button>
                 
                 {/* Load Template Button */}
-                <input
+                  <input
                   ref={loadTemplateInputRef}
-                  type="file"
-                  accept=".json"
-                  onChange={loadTemplate}
+                    type="file"
+                    accept=".json"
+                    onChange={loadTemplate}
                   className="hidden"
-                />
-                <Button
+                  />
+                  <Button
                   onClick={handleLoadTemplateClick}
-                  variant="outline"
-                  className="flex items-center gap-2"
-                >
-                  <FolderOpen className="h-4 w-4" />
-                  Load Template
-                </Button>
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                      <FolderOpen className="h-4 w-4" />
+                      Load Template
+                  </Button>
                 
                 <Button
                   onClick={() => {
@@ -1022,8 +1022,8 @@ export function RunningOrderTemplate({
                   color: '#ffffff',
                   display: 'flex',
                   flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                   boxSizing: 'border-box',
                   pageBreakAfter: 'always',
                   breakAfter: 'page',
@@ -1031,14 +1031,14 @@ export function RunningOrderTemplate({
                   breakInside: 'avoid',
                   overflow: 'hidden',
                   padding: '20mm'
-                }}
-              >
+                      }}
+                    >
                 {/* Logo - centered and large */}
                 {competitionLogo && (
-                  <img
-                    src={competitionLogo}
-                    alt="Competition logo"
-                    style={{ 
+                      <img
+                        src={competitionLogo}
+                        alt="Competition logo"
+                  style={{
                       width: '120mm', 
                       height: '120mm', 
                       objectFit: 'contain',
@@ -1081,7 +1081,7 @@ export function RunningOrderTemplate({
                     opacity: 0.9, 
                     margin: '0 0 15mm', 
                     lineHeight: 1.4,
-                    textAlign: 'center',
+                        textAlign: 'center',
                     direction: 'rtl'
                   }}>
                     {teamLineSecondary}
@@ -1105,18 +1105,18 @@ export function RunningOrderTemplate({
                       {selectedStadium.name1} – {selectedStadium.city1}
                     </p>
                   )}
-                </div>
-              </div>
+                  </div>
+                          </div>
 
               {/* Category Overview removed from print */}
 
-              <RunningOrderCards
-                items={presentationItems}
-                categories={categories}
-                onUpdateItem={updateItem}
-                onDeleteItem={deleteItem}
-                mode="presentation"
-              />
+                  <RunningOrderCards
+                    items={presentationItems}
+                    categories={categories}
+                    onUpdateItem={updateItem}
+                    onDeleteItem={deleteItem}
+                    mode="presentation"
+                  />
         </div>
     </>
   )

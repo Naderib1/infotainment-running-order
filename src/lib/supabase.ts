@@ -9,3 +9,5 @@ export const isSupabaseConfigured = () => true
 
 // Create the Supabase client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+

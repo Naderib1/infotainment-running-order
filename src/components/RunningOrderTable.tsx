@@ -259,15 +259,15 @@ export function RunningOrderTable({
                     <option value="no">No audio</option>
                   </select>
                 ) : (
-                  <span
-                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                      item.audio
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                        : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
-                    }`}
-                  >
-                    {item.audio ? 'With audio' : 'No audio'}
-                  </span>
+                <span
+                  className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                    item.audio
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                      : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+                  }`}
+                >
+                  {item.audio ? 'With audio' : 'No audio'}
+                </span>
                 )}
               </TableCell>
               {/* Video */}
@@ -283,9 +283,9 @@ export function RunningOrderTable({
                     <option value="Playlist">Playlist</option>
                   </select>
                 ) : (
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-                    {item.videoType}
-                  </span>
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                  {item.videoType}
+                </span>
                 )}
               </TableCell>
               {/* Actions */}

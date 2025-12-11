@@ -47,3 +47,5 @@ CREATE TRIGGER update_user_data_updated_at
   BEFORE UPDATE ON user_data
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
+
+
