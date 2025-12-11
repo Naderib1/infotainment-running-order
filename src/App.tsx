@@ -1,13 +1,17 @@
 import { useState, useEffect, useCallback } from 'react'
 import { CompetitionSetup } from './components/CompetitionSetup'
 import { RunningOrderTemplate } from './components/RunningOrderTemplate'
+import { PublicUserView } from './components/PublicUserView'
 import { Auth } from './components/Auth'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { useSupabaseData } from './hooks/useSupabaseData'
+import { useAdmin } from './hooks/useAdmin'
+import { useDefaultTemplate } from './hooks/useDefaultTemplate'
 import { Competition, RunningOrderItem, AppData, MatchConfig } from './types'
 import { defaultCategories, defaultRunningOrder, defaultStadiums, defaultTeams } from './data/defaultCategories'
 import { ensureAppDataShape } from './lib/ensureShape'
-import { LogOut, Save, Cloud, CloudOff, User } from 'lucide-react'
+import { LogOut, Save, Cloud, CloudOff, User, Shield, Upload } from 'lucide-react'
+import { Button } from './components/ui/button'
 
 // Path to the default template file in the public folder
 const DEFAULT_TEMPLATE_URL = '/default-template.json'
@@ -50,6 +54,9 @@ const initialAppData: AppData = {
 
 function AppContent() {
   const { user, loading: authLoading, signOut, isConfigured } = useAuth()
+  const { isAdmin, loading: adminLoading } = useAdmin()
+  const { template, loading: templateLoading, saving: publishingSaving, saveTemplate } = useDefaultTemplate()
+  
   const [currentStep, setCurrentStep] = useState(() => {
     if (typeof window === 'undefined') return 1
     try {
@@ -63,6 +70,22 @@ function AppContent() {
   
   const { data: appData, setData: setAppData, loading: dataLoading, saving, lastSaved } = useSupabaseData(initialAppData)
   const [isInitialized, setIsInitialized] = useState(false)
+  
+  // Publish template to Supabase (admin only)
+  const handlePublishTemplate = async () => {
+    if (!isAdmin || !user?.email) return
+    
+    if (!confirm('Publish this template as the default for all users?\n\nThis will update the template that all public users see.')) {
+      return
+    }
+    
+    const success = await saveTemplate(appData, user.email)
+    if (success) {
+      alert('✅ Template published successfully!\n\nAll users will now see this template.')
+    } else {
+      alert('❌ Failed to publish template. Please try again.')
+    }
+  }
 
   // Function to load template from the default template file
   const loadDefaultTemplate = useCallback(async () => {
@@ -164,7 +187,7 @@ function AppContent() {
   }, [appData.competition])
 
   // Show loading state
-  if (authLoading || dataLoading || !isInitialized) {
+  if (authLoading || templateLoading || adminLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900">
         <div className="text-center">
@@ -175,9 +198,39 @@ function AppContent() {
     )
   }
 
-  // Show auth screen if Supabase is configured but user is not logged in
-  if (isConfigured && !user) {
+  // PUBLIC USER MODE: Show simplified view if not logged in
+  if (!user && template) {
+    return (
+      <>
+        <PublicUserView
+          competition={template.competition}
+          runningOrder={template.runningOrder}
+          categories={template.categories}
+          loading={false}
+        />
+        {/* Admin login link at bottom */}
+        <div className="fixed bottom-4 right-4 print:hidden">
+          <Auth mode="link" />
+        </div>
+      </>
+    )
+  }
+  
+  // Show login for admins if no template exists yet
+  if (!user && !template) {
     return <Auth />
+  }
+
+  // Wait for admin data to load
+  if (dataLoading || !isInitialized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <p className="text-slate-600 dark:text-slate-300">Loading admin data...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -185,6 +238,25 @@ function AppContent() {
       {/* User info bar - only show if logged in */}
       {user && (
         <div className="fixed top-4 right-4 z-50 print:hidden flex items-center gap-2">
+          {/* Admin badge and Publish button */}
+          {isAdmin && (
+            <>
+              <div className="flex items-center gap-1 bg-amber-100 dark:bg-amber-900/50 border border-amber-300 dark:border-amber-700 rounded-full px-2 py-1">
+                <Shield className="h-3.5 w-3.5 text-amber-600" />
+                <span className="text-xs font-medium text-amber-700 dark:text-amber-300">Admin</span>
+              </div>
+              <Button
+                onClick={handlePublishTemplate}
+                disabled={publishingSaving}
+                size="sm"
+                className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-full px-3 py-1 h-auto text-xs flex items-center gap-1"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                {publishingSaving ? 'Publishing...' : 'Publish Template'}
+              </Button>
+            </>
+          )}
+
           {/* Save status indicator */}
           <div className="flex items-center gap-2 bg-white/80 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70 rounded-full shadow-lg backdrop-blur px-3 py-1.5">
             {saving ? (
@@ -279,6 +351,7 @@ function AppContent() {
           onVenueChange={handleVenueChange}
           onMatchConfigChange={handleMatchConfigChange}
           onCompetitionChange={handleCompetitionChange}
+          onResetAllData={(newData) => setAppData(newData)}
           onBack={prevStep}
         />
       )}

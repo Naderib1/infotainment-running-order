@@ -4,9 +4,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/contexts/AuthContext'
-import { LogIn, UserPlus, Loader2 } from 'lucide-react'
+import { LogIn, UserPlus, Loader2, Shield } from 'lucide-react'
 
-export function Auth() {
+interface AuthProps {
+  mode?: 'full' | 'link'
+}
+
+export function Auth({ mode = 'full' }: AuthProps) {
   const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -43,6 +47,28 @@ export function Auth() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Link mode: just show a small admin login button
+  if (mode === 'link') {
+    return (
+      <button
+        onClick={() => {
+          // Open login modal or redirect - for now just show prompt
+          const email = prompt('Admin Email:')
+          const password = prompt('Password:')
+          if (email && password) {
+            signIn(email, password).then(({ error }) => {
+              if (error) alert('Login failed: ' + error.message)
+            })
+          }
+        }}
+        className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 transition"
+      >
+        <Shield className="h-3 w-3" />
+        Admin Login
+      </button>
+    )
   }
 
   return (

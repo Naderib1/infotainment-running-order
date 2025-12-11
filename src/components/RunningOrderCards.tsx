@@ -14,6 +14,7 @@ interface RunningOrderCardsProps {
   onDeleteItem: (id: string) => void
   onAddItemForCategory?: (categoryId: string) => void
   mode?: 'interactive' | 'presentation'
+  readOnly?: boolean
 }
 
 export function RunningOrderCards({
@@ -22,12 +23,13 @@ export function RunningOrderCards({
   onUpdateItem,
   onDeleteItem,
   onAddItemForCategory,
-  mode = 'interactive'
+  mode = 'interactive',
+  readOnly = false
 }: RunningOrderCardsProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingData, setEditingData] = useState<Partial<RunningOrderItem>>({})
   const isPresentation = mode === 'presentation'
-  const editingEnabled = !isPresentation
+  const editingEnabled = !isPresentation && !readOnly
   const editingItemId = editingEnabled ? editingId : null
 
   // Shared time parser for consistent ordering

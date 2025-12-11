@@ -20,7 +20,8 @@ import {
   Calendar,
   Trophy,
   Save,
-  FolderOpen
+  FolderOpen,
+  RotateCcw
 } from 'lucide-react'
 import { downloadFile } from '@/lib/utils'
 import { applyTokens, TokenContext } from '@/lib/tokens'
@@ -40,6 +41,7 @@ interface RunningOrderTemplateProps {
   onVenueChange: (venueId: string) => void
   onMatchConfigChange: (config: MatchConfig) => void
   onCompetitionChange: (competition: Competition) => void
+  onResetAllData: (data: { competition: Competition; runningOrder: RunningOrderItem[]; categories: RunningOrderCategory[]; selectedVenue: string; matchConfig: MatchConfig }) => void
   onBack: () => void
 }
 
@@ -54,6 +56,7 @@ export function RunningOrderTemplate({
   onVenueChange,
   onMatchConfigChange,
   onCompetitionChange,
+  onResetAllData,
   onBack
 }: RunningOrderTemplateProps) {
   const [addDialogOpen, setAddDialogOpen] = useState(false)
@@ -526,6 +529,42 @@ export function RunningOrderTemplate({
     }
   }
 
+  const resetToDefault = async () => {
+    if (!confirm('Reset to default AFCON template?\n\nThis will replace all current data with the default template.')) {
+      return
+    }
+    
+    try {
+      const response = await fetch('/default-template.json')
+      if (!response.ok) {
+        throw new Error('Failed to fetch default template')
+      }
+      const templateData = await response.json()
+      
+      const normalized = ensureAppDataShape({
+        competition: templateData.competition || competition,
+        runningOrder: templateData.runningOrder || [],
+        categories: templateData.categories || [],
+        selectedVenue: templateData.selectedVenue ?? selectedVenue,
+        matchConfig: templateData.matchConfig ?? matchConfig
+      })
+
+      // Update all data in a single call to avoid race conditions
+      onResetAllData({
+        competition: normalized.competition,
+        runningOrder: normalized.runningOrder,
+        categories: normalized.categories,
+        selectedVenue: normalized.selectedVenue,
+        matchConfig: normalized.matchConfig
+      })
+      
+      alert(`✅ Reset to default template!\n\nItems: ${normalized.runningOrder.length}\nCategories: ${normalized.categories.length}`)
+    } catch (error) {
+      console.error('Error resetting to default:', error)
+      alert('❌ Error loading default template.')
+    }
+  }
+
   return (
     <>
     <div className="app-shell min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900 p-4">
@@ -925,6 +964,16 @@ export function RunningOrderTemplate({
                       <FolderOpen className="h-4 w-4" />
                       Load Template
                   </Button>
+
+                {/* Reset to Default Button */}
+                <Button
+                  onClick={resetToDefault}
+                  variant="outline"
+                  className="flex items-center gap-2 text-amber-600 border-amber-300 hover:bg-amber-50"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  Reset to Default
+                </Button>
                 
                 <Button
                   onClick={() => {
