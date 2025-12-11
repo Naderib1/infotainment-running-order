@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback } from 'react'
 import { CompetitionSetup } from './components/CompetitionSetup'
 import { RunningOrderTemplate } from './components/RunningOrderTemplate'
-import { useLocalStorage } from './hooks/useLocalStorage'
+import { Auth } from './components/Auth'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { useSupabaseData } from './hooks/useSupabaseData'
 import { Competition, RunningOrderItem, AppData, MatchConfig } from './types'
 import { defaultCategories, defaultRunningOrder, defaultStadiums, defaultTeams } from './data/defaultCategories'
 import { ensureAppDataShape } from './lib/ensureShape'
+import { LogOut, Save, Cloud, CloudOff, User } from 'lucide-react'
 
 // Path to the default template file in the public folder
-// To update the template, replace the file at: public/default-template.json
 const DEFAULT_TEMPLATE_URL = '/default-template.json'
 
 const initialCompetition: Competition = {
@@ -46,21 +48,21 @@ const initialAppData: AppData = {
   dataVersion: 2
 }
 
-function App() {
+function AppContent() {
+  const { user, loading: authLoading, signOut, isConfigured } = useAuth()
   const [currentStep, setCurrentStep] = useState(() => {
     if (typeof window === 'undefined') return 1
     try {
-      const stored = window.localStorage.getItem(
-        'running-order-current-step'
-      )
+      const stored = window.localStorage.getItem('running-order-current-step')
       if (stored === '2') return 2
     } catch {
       // ignore
     }
     return 1
   })
-  const [appData, setAppData] = useLocalStorage<AppData>('running-order-app', initialAppData)
-  const [isLoading, setIsLoading] = useState(true)
+  
+  const { data: appData, setData: setAppData, loading: dataLoading, saving, lastSaved } = useSupabaseData(initialAppData)
+  const [isInitialized, setIsInitialized] = useState(false)
 
   // Function to load template from the default template file
   const loadDefaultTemplate = useCallback(async () => {
@@ -72,7 +74,6 @@ function App() {
       }
       const templateData = await response.json()
       
-      // Validate the template structure
       if (!templateData.competition && !templateData.runningOrder && !templateData.categories) {
         console.warn('Invalid template structure, using built-in defaults')
         return null
@@ -91,56 +92,50 @@ function App() {
     }
   }, [])
 
-  // On first load, fetch and apply the default template
+  // Initialize app with template if user has no data
   useEffect(() => {
-    const initializeApp = async () => {
-      // Always load fresh from template file on app start
-      const templateData = await loadDefaultTemplate()
-      if (templateData) {
-        setAppData(templateData)
-        console.log('✅ Loaded template from default-template.json')
-      } else {
-        // Fallback: ensure existing data is properly shaped
-        setAppData(prev => ensureAppDataShape(prev))
+    const initializeData = async () => {
+      if (dataLoading || isInitialized) return
+      
+      // If user has no data (new user), load from template
+      if (appData.runningOrder.length === 0 || !appData.competition.name1) {
+        const templateData = await loadDefaultTemplate()
+        if (templateData) {
+          setAppData(templateData)
+          console.log('✅ Loaded default template for new user')
+        }
       }
-      setIsLoading(false)
+      setIsInitialized(true)
     }
     
-    initializeApp()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  // Auto-save data whenever appData changes
-  useEffect(() => {
-    // This effect ensures data is always saved to localStorage
-    // The useLocalStorage hook handles the actual saving
-  }, [appData])
+    initializeData()
+  }, [dataLoading, isInitialized, appData, loadDefaultTemplate, setAppData])
 
   const handleCompetitionChange = (competition: Competition) => {
-    setAppData(prev => ({ ...prev, competition }))
+    setAppData({ ...appData, competition })
   }
 
   const handleRunningOrderChange = (runningOrder: RunningOrderItem[]) => {
-    setAppData(prev => ({ ...prev, runningOrder }))
+    setAppData({ ...appData, runningOrder })
   }
 
   const handleVenueChange = (venueId: string) => {
-    setAppData(prev => ({
-      ...prev,
+    setAppData({
+      ...appData,
       selectedVenue: venueId,
       matchConfig: {
-        ...prev.matchConfig,
+        ...appData.matchConfig,
         stadiumId: venueId
       }
-    }))
+    })
   }
 
   const handleMatchConfigChange = (matchConfig: MatchConfig) => {
-    setAppData(prev => ({
-      ...prev,
+    setAppData({
+      ...appData,
       matchConfig,
       selectedVenue: matchConfig.stadiumId
-    }))
+    })
   }
 
   const nextStep = () => {
@@ -154,10 +149,7 @@ function App() {
   useEffect(() => {
     try {
       if (typeof window !== 'undefined') {
-        window.localStorage.setItem(
-          'running-order-current-step',
-          String(currentStep)
-        )
+        window.localStorage.setItem('running-order-current-step', String(currentStep))
       }
     } catch {
       // ignore
@@ -171,20 +163,72 @@ function App() {
     document.title = competitionTitle ? `${competitionTitle} | ${baseTitle}` : baseTitle
   }, [appData.competition])
 
-  // Show loading state while fetching template
-  if (isLoading) {
+  // Show loading state
+  if (authLoading || dataLoading || !isInitialized) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-          <p className="text-slate-600 dark:text-slate-300">Loading template...</p>
+          <p className="text-slate-600 dark:text-slate-300">Loading...</p>
         </div>
       </div>
     )
   }
 
+  // Show auth screen if Supabase is configured but user is not logged in
+  if (isConfigured && !user) {
+    return <Auth />
+  }
+
   return (
     <div className="min-h-screen">
+      {/* User info bar - only show if logged in */}
+      {user && (
+        <div className="fixed top-4 right-4 z-50 print:hidden flex items-center gap-2">
+          {/* Save status indicator */}
+          <div className="flex items-center gap-2 bg-white/80 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70 rounded-full shadow-lg backdrop-blur px-3 py-1.5">
+            {saving ? (
+              <>
+                <Save className="h-4 w-4 text-blue-500 animate-pulse" />
+                <span className="text-xs text-slate-600 dark:text-slate-300">Saving...</span>
+              </>
+            ) : (
+              <>
+                <Cloud className="h-4 w-4 text-green-500" />
+                <span className="text-xs text-slate-600 dark:text-slate-300">
+                  {lastSaved ? `Saved` : 'Synced'}
+                </span>
+              </>
+            )}
+          </div>
+
+          {/* User menu */}
+          <div className="flex items-center gap-2 bg-white/80 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70 rounded-full shadow-lg backdrop-blur px-3 py-1.5">
+            <User className="h-4 w-4 text-slate-500" />
+            <span className="text-xs text-slate-600 dark:text-slate-300 max-w-[120px] truncate">
+              {user.email}
+            </span>
+            <button
+              onClick={signOut}
+              className="ml-1 p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+              title="Sign out"
+            >
+              <LogOut className="h-3.5 w-3.5 text-slate-500" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Offline mode indicator */}
+      {!isConfigured && (
+        <div className="fixed top-4 right-4 z-50 print:hidden">
+          <div className="flex items-center gap-2 bg-amber-100 dark:bg-amber-900/50 border border-amber-300 dark:border-amber-700 rounded-full shadow-lg px-3 py-1.5">
+            <CloudOff className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            <span className="text-xs text-amber-700 dark:text-amber-300">Offline Mode</span>
+          </div>
+        </div>
+      )}
+
       {/* Top-level tabs to switch between steps - hidden in print */}
       <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 print:hidden app-nav-toggle">
         <div className="flex items-center bg-white/80 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70 rounded-full shadow-lg backdrop-blur px-1 py-1">
@@ -231,7 +275,7 @@ function App() {
           selectedVenue={appData.selectedVenue}
           matchConfig={appData.matchConfig}
           onUpdateRunningOrder={handleRunningOrderChange}
-          onUpdateCategories={(categories) => setAppData(prev => ({ ...prev, categories }))}
+          onUpdateCategories={(categories) => setAppData({ ...appData, categories })}
           onVenueChange={handleVenueChange}
           onMatchConfigChange={handleMatchConfigChange}
           onCompetitionChange={handleCompetitionChange}
@@ -239,6 +283,14 @@ function App() {
         />
       )}
     </div>
+  )
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   )
 }
 
