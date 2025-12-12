@@ -12,22 +12,16 @@ import { Competition, RunningOrderItem, RunningOrderCategory, MatchConfig } from
 import { 
   ChevronLeft, 
   Plus, 
-  Download, 
   FileText,
   Table,
   LayoutGrid,
   MapPin,
   Calendar,
   Trophy,
-  Save,
-  FolderOpen,
   RotateCcw
 } from 'lucide-react'
-import { downloadFile } from '@/lib/utils'
 import { applyTokens, TokenContext } from '@/lib/tokens'
 import { ensureAppDataShape } from '@/lib/ensureShape'
-import jsPDF from 'jspdf'
-import html2canvas from 'html2canvas'
 import { getCategoryPaletteEntry } from '@/data/categoryPalette'
 
 interface RunningOrderTemplateProps {
@@ -56,7 +50,6 @@ export function RunningOrderTemplate({
   onUpdateCategories,
   onVenueChange,
   onMatchConfigChange,
-  onCompetitionChange,
   onResetAllData,
   onBack,
   readOnly = false
@@ -64,7 +57,6 @@ export function RunningOrderTemplate({
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [addDialogCategoryId, setAddDialogCategoryId] = useState<string | undefined>(undefined)
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards')
-  const [isExporting, setIsExporting] = useState(false)
   const pdfContentRef = useRef<HTMLDivElement>(null)
 
   const effectiveStadiumId = matchConfig.stadiumId || selectedVenue
@@ -208,147 +200,6 @@ export function RunningOrderTemplate({
   const coverSecondary =
     competition.branding.secondaryColor || '#640000'
 
-  const exportToHTML = () => {
-    if (!pdfContentRef.current) return
-    const exportMarkup = pdfContentRef.current.innerHTML
-    const css = `
-      :root {
-        color-scheme: light;
-      }
-      * {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        padding: 0;
-        font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-        background: #ffffff;
-        min-height: 100vh;
-        color: #0f172a;
-      }
-      .export-wrapper {
-        max-width: 210mm;
-        margin: 0 auto;
-        padding: 0;
-      }
-      .glass-card {
-        background: rgba(255, 255, 255, 0.95);
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        border-radius: 12px;
-        box-shadow: 0 2px 10px rgba(15,23,42,0.08);
-      }
-      .cover-page {
-        width: 210mm;
-        height: 297mm;
-        max-height: 297mm;
-        page-break-after: always;
-        break-after: page;
-        page-break-inside: avoid;
-        break-inside: avoid;
-        margin: 0;
-        overflow: hidden;
-      }
-      .category-section {
-        display: block;
-        page-break-before: always;
-        break-before: page;
-        padding-top: 8mm;
-        padding-bottom: 8mm;
-        margin: 0;
-      }
-      .category-banner {
-        display: block;
-        page-break-inside: avoid;
-        break-inside: avoid;
-        page-break-after: avoid;
-        break-after: avoid;
-        border-radius: 12px;
-        margin-bottom: 5mm;
-      }
-      .running-order-card {
-        display: block;
-        page-break-inside: avoid;
-        break-inside: avoid;
-        margin-bottom: 5mm;
-      }
-      @page {
-        size: A4;
-        margin: 10mm 8mm;
-      }
-      @media print {
-        body {
-          background: white !important;
-          margin: 0 !important;
-          padding: 0 !important;
-        }
-        .export-wrapper {
-          padding: 0 !important;
-          max-width: none !important;
-        }
-        .cover-page {
-          height: 100vh !important;
-          max-height: 100vh !important;
-          page-break-after: always !important;
-          break-after: page !important;
-          overflow: hidden !important;
-        }
-        .category-section {
-          page-break-before: always !important;
-          break-before: page !important;
-        }
-        .category-banner {
-          page-break-inside: avoid !important;
-          break-inside: avoid !important;
-          page-break-after: avoid !important;
-          break-after: avoid !important;
-        }
-        .running-order-card {
-          page-break-inside: avoid !important;
-          break-inside: avoid !important;
-        }
-        .glass-card {
-          background: white !important;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
-          page-break-inside: avoid !important;
-          break-inside: avoid !important;
-        }
-      }
-    `
-
-    const html = `<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${competition.name1} - Infotainment Running Order</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['Inter', 'Segoe UI', 'system-ui', 'sans-serif']
-            }
-          }
-        }
-      }
-    </script>
-    <style>${css}</style>
-  </head>
-  <body>
-    <div class="export-wrapper">
-      ${exportMarkup}
-    </div>
-  </body>
-</html>`
-
-    const filename = `${competition.name1} - Infotainment Running Order.html`
-    downloadFile(html, filename, 'text/html')
-  }
-
   const handlePrintView = () => {
     if (typeof window === 'undefined') return
     const mediaQuery = window.matchMedia('print')
@@ -380,155 +231,6 @@ export function RunningOrderTemplate({
       mediaQuery.addListener(handleChange)
     }
     window.print()
-  }
-
-  const exportToPDF = async () => {
-    if (!pdfContentRef.current) return
-    setIsExporting(true)
-    try {
-      const exportRoot = pdfContentRef.current
-      const pdf = new jsPDF('p', 'mm', 'a4')
-      const pageWidth = pdf.internal.pageSize.getWidth()
-      const pageHeight = pdf.internal.pageSize.getHeight()
-      const margin = 8
-      const printableWidth = pageWidth - margin * 2
-      const maxBlockHeight = pageHeight - margin * 2
-      let currentY = margin
-
-      const renderChunk = async (element: HTMLElement) => {
-        const exportFlag = element.getAttribute('data-export')
-        const isFullPage = exportFlag === 'cover-page'
-        const canvas = await html2canvas(element, {
-          scale: 2,
-          useCORS: true,
-          scrollX: 0,
-          scrollY: 0,
-          backgroundColor: null
-        })
-
-        const availableWidth = isFullPage ? pageWidth : printableWidth
-        const availableHeight = isFullPage ? pageHeight : maxBlockHeight
-
-        let drawWidth = availableWidth
-        let drawHeight = (canvas.height * drawWidth) / canvas.width
-        if (drawHeight > availableHeight) {
-          const scaleFactor = availableHeight / drawHeight
-          drawHeight = availableHeight
-          drawWidth = drawWidth * scaleFactor
-        }
-
-        if (!isFullPage && currentY + drawHeight > pageHeight - margin) {
-          pdf.addPage()
-          currentY = margin
-        }
-
-        const offsetX = isFullPage ? 0 : margin + (printableWidth - drawWidth) / 2
-        const yPosition = isFullPage ? 0 : currentY
-
-        const imgData = canvas.toDataURL('image/png', 0.95)
-        pdf.addImage(imgData, 'PNG', offsetX, yPosition, drawWidth, drawHeight)
-        currentY = isFullPage ? pageHeight : currentY + drawHeight + 4
-      }
-
-      const chunks = Array.from(
-        exportRoot.querySelectorAll('[data-export="cover-page"], [data-export="categories-overview"], [data-export-chunk="true"]')
-      ) as HTMLElement[]
-
-      for (const chunk of chunks) {
-        // eslint-disable-next-line no-await-in-loop
-        await renderChunk(chunk)
-      }
-
-      const filename = `Infotainment Running Order - ${competition.name1} - ${
-        selectedStadium?.name1 || 'Venue'
-      }.pdf`
-      pdf.save(filename)
-    } catch (error) {
-      console.error('Error generating PDF:', error)
-      alert('Error generating PDF. Please try again.')
-    } finally {
-      setIsExporting(false)
-    }
-  }
-
-  const saveTemplate = () => {
-    try {
-    const templateData = {
-      competition,
-      runningOrder,
-      categories,
-      selectedVenue,
-      matchConfig,
-      version: '1.0',
-      createdAt: new Date().toISOString()
-    }
-    
-    const jsonContent = JSON.stringify(templateData, null, 2)
-      // Sanitize filename - remove special characters
-      const safeName = (competition.name1 || 'Running Order').replace(/[^a-zA-Z0-9\s-]/g, '').trim()
-      const filename = `${safeName} - Running Order Template.json`
-    downloadFile(jsonContent, filename, 'application/json')
-      
-      // Show success feedback
-      alert(`Template saved successfully!\nFilename: ${filename}`)
-    } catch (error) {
-      console.error('Error saving template:', error)
-      alert('Error saving template. Please try again.')
-    }
-  }
-
-  const loadTemplateInputRef = useRef<HTMLInputElement>(null)
-
-  const handleLoadTemplateClick = () => {
-    // Reset the input value so the same file can be selected again
-    if (loadTemplateInputRef.current) {
-      loadTemplateInputRef.current.value = ''
-      loadTemplateInputRef.current.click()
-    }
-  }
-
-  const loadTemplate = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    try {
-      const jsonContent = await file.text()
-      const templateData = JSON.parse(jsonContent)
-      
-      // Validate the template structure
-      if (!templateData.competition && !templateData.runningOrder && !templateData.categories) {
-        throw new Error('Invalid template file structure - missing required data')
-      }
-      
-      const normalized = ensureAppDataShape({
-        competition: templateData.competition || competition,
-        runningOrder: templateData.runningOrder || [],
-        categories: templateData.categories || [],
-        selectedVenue: templateData.selectedVenue ?? selectedVenue,
-        matchConfig: templateData.matchConfig ?? matchConfig
-      })
-
-      // Update all data
-      onCompetitionChange(normalized.competition)
-      onUpdateRunningOrder(normalized.runningOrder)
-      onUpdateCategories(normalized.categories)
-      if (normalized.selectedVenue) {
-        onVenueChange(normalized.selectedVenue)
-      }
-      onMatchConfigChange(normalized.matchConfig)
-      
-      const templateName = normalized.competition.name1 || normalized.competition.name || file.name
-      alert(`✅ Template loaded successfully!\n\nCompetition: ${templateName}\nItems: ${normalized.runningOrder.length}\nCategories: ${normalized.categories.length}`)
-      
-    } catch (error) {
-      console.error('Error loading template:', error)
-      alert('❌ Error loading template file.\n\nPlease make sure it\'s a valid Running Order template file (.json)')
-    }
-    
-    // Reset the input so the same file can be loaded again
-    if (loadTemplateInputRef.current) {
-      loadTemplateInputRef.current.value = ''
-    }
   }
 
   const resetToDefault = async () => {
@@ -583,49 +285,10 @@ export function RunningOrderTemplate({
           </Button>
 
           <div className="flex items-center gap-3">
-            {/* View Mode Toggle */}
-            <div className="flex items-center gap-1 glass-card p-1 rounded-lg">
-              <Button
-                variant={viewMode === 'cards' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('cards')}
-                className="flex items-center gap-2"
-              >
-                <LayoutGrid className="h-4 w-4" />
-                Cards
-              </Button>
-              <Button
-                variant={viewMode === 'table' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('table')}
-                className="flex items-center gap-2"
-              >
-                <Table className="h-4 w-4" />
-                Table
-              </Button>
-            </div>
-
-            {/* Export Buttons */}
-            <Button
-              onClick={exportToHTML}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <FileText className="h-4 w-4" />
-              Export HTML
-            </Button>
-            <Button
-              onClick={exportToPDF}
-              disabled={isExporting}
-              variant="gradient"
-              className="flex items-center gap-2"
-            >
-              <Download className="h-4 w-4" />
-              {isExporting ? 'Generating PDF...' : 'Export PDF'}
-            </Button>
+            {/* Print Button */}
             <Button
               onClick={handlePrintView}
-              variant="outline"
+              variant="gradient"
               className="flex items-center gap-2"
             >
               <FileText className="h-4 w-4" />
@@ -941,58 +604,55 @@ export function RunningOrderTemplate({
                   Manage your competition running order timeline
                 </CardDescription>
               </div>
-              {!readOnly && (
-                <div className="flex items-center gap-2">
-                  {/* Save Template Button */}
-                    <Button
-                      onClick={saveTemplate}
-                      variant="gradient"
-                      className="flex items-center gap-2"
-                    >
-                      <Save className="h-4 w-4" />
-                      Save Template
-                    </Button>
-                  
-                  {/* Load Template Button */}
-                    <input
-                    ref={loadTemplateInputRef}
-                      type="file"
-                      accept=".json"
-                      onChange={loadTemplate}
-                    className="hidden"
-                    />
-                    <Button
-                    onClick={handleLoadTemplateClick}
-                      variant="outline"
-                      className="flex items-center gap-2"
-                    >
-                        <FolderOpen className="h-4 w-4" />
-                        Load Template
-                    </Button>
-
-                  {/* Reset to Default Button */}
+              <div className="flex items-center gap-2">
+                {/* View Mode Toggle */}
+                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
                   <Button
-                    onClick={resetToDefault}
-                    variant="outline"
-                    className="flex items-center gap-2 text-amber-600 border-amber-300 hover:bg-amber-50"
+                    variant={viewMode === 'cards' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('cards')}
+                    className="flex items-center gap-2"
                   >
-                    <RotateCcw className="h-4 w-4" />
-                    Reset to Default
+                    <LayoutGrid className="h-4 w-4" />
+                    Cards
                   </Button>
-                  
                   <Button
-                    onClick={() => {
-                      setAddDialogCategoryId(undefined)
-                      setAddDialogOpen(true)
-                    }}
-                    variant="gradient"
-                    disabled={categories.length === 0}
+                    variant={viewMode === 'table' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('table')}
+                    className="flex items-center gap-2"
                   >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Item
+                    <Table className="h-4 w-4" />
+                    Table
                   </Button>
                 </div>
-              )}
+
+                {!readOnly && (
+                  <>
+                    {/* Reset to Default Button */}
+                    <Button
+                      onClick={resetToDefault}
+                      variant="outline"
+                      className="flex items-center gap-2 text-amber-600 border-amber-300 hover:bg-amber-50"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                      Reset to Default
+                    </Button>
+                    
+                    <Button
+                      onClick={() => {
+                        setAddDialogCategoryId(undefined)
+                        setAddDialogOpen(true)
+                      }}
+                      variant="gradient"
+                      disabled={categories.length === 0}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Item
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
             {categories.length === 0 && (
               <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
