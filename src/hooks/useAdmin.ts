@@ -23,15 +23,36 @@ export function useAdmin() {
 
         if (error) {
           console.error('Error checking admin status:', error)
-          setIsAdmin(false)
+          // If admins table doesn't exist or query fails, check if user email matches hardcoded admin
+          if (user.email.toLowerCase() === 'nader.ibrahim@cafonline.com') {
+            console.log('Fallback: User is hardcoded admin')
+            setIsAdmin(true)
+          } else {
+            setIsAdmin(false)
+          }
         } else {
           const adminEmails = data?.map(a => a.email.toLowerCase()) || []
+          console.log('Admin emails from DB:', adminEmails)
+          console.log('Current user email:', user.email.toLowerCase())
+          const isUserAdmin = adminEmails.includes(user.email.toLowerCase())
+          console.log('Is admin:', isUserAdmin)
           setAdmins(adminEmails)
-          setIsAdmin(adminEmails.includes(user.email.toLowerCase()))
+          setIsAdmin(isUserAdmin)
+          
+          // Fallback if table is empty but user is the main admin
+          if (!isUserAdmin && user.email.toLowerCase() === 'nader.ibrahim@cafonline.com') {
+            console.log('Fallback: User is hardcoded admin (table empty)')
+            setIsAdmin(true)
+          }
         }
       } catch (err) {
         console.error('Error checking admin:', err)
-        setIsAdmin(false)
+        // Fallback for hardcoded admin
+        if (user.email.toLowerCase() === 'nader.ibrahim@cafonline.com') {
+          setIsAdmin(true)
+        } else {
+          setIsAdmin(false)
+        }
       } finally {
         setLoading(false)
       }
