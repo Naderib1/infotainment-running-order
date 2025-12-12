@@ -25,6 +25,7 @@ import { applyTokens, TokenContext } from '@/lib/tokens'
 import { ensureAppDataShape } from '@/lib/ensureShape'
 import { getCategoryPaletteEntry } from '@/data/categoryPalette'
 import { downloadFile } from '@/lib/utils'
+import { GameExtras } from '@/hooks/useGameExtras'
 
 interface RunningOrderTemplateProps {
   competition: Competition
@@ -40,6 +41,8 @@ interface RunningOrderTemplateProps {
   onResetAllData: (data: { competition: Competition; runningOrder: RunningOrderItem[]; categories: RunningOrderCategory[]; selectedVenue: string; matchConfig: MatchConfig }) => void
   onBack: () => void
   readOnly?: boolean
+  gameExtras?: GameExtras
+  deactivatedItemNames?: string[]
 }
 
 export function RunningOrderTemplate({
@@ -50,6 +53,8 @@ export function RunningOrderTemplate({
   matchConfig,
   onUpdateRunningOrder,
   onUpdateCategories,
+  gameExtras,
+  deactivatedItemNames = [],
   onVenueChange,
   onMatchConfigChange,
   onResetAllData,
@@ -187,15 +192,43 @@ export function RunningOrderTemplate({
     {}
   )
   const activeItemCount = runningOrder.filter(item => item.active !== false).length
-  const headerStats = [
-    { label: 'Total items', value: activeItemCount },
-    { label: 'Categories', value: categories.length },
-    matchConfig.matchTime ? { label: 'Kick-off', value: matchConfig.matchTime } : null,
-    selectedStadium
-      ? { label: 'Venue', value: `${selectedStadium.name1} – ${selectedStadium.city1}` }
-      : null,
-    matchConfig.extraNotes ? { label: 'Notes', value: matchConfig.extraNotes } : null
-  ].filter(Boolean) as { label: string; value: string | number }[]
+  
+  // Build header stats based on whether we have game extras (public view) or not (admin view)
+  const headerStats: { label: string; value: string | number; isList?: boolean; items?: string[] }[] = []
+  
+  // Always show kick-off and venue
+  if (matchConfig.matchTime) {
+    headerStats.push({ label: 'Kick-off', value: matchConfig.matchTime })
+  }
+  if (selectedStadium) {
+    headerStats.push({ label: 'Venue', value: `${selectedStadium.name1} – ${selectedStadium.city1}` })
+  }
+  
+  // If we have game extras, show them instead of total items/categories
+  if (gameExtras) {
+    if (gameExtras.influencers?.length > 0) {
+      headerStats.push({ label: 'Influencers', value: gameExtras.influencers.join(', '), isList: true, items: gameExtras.influencers })
+    }
+    if (gameExtras.legends?.length > 0) {
+      headerStats.push({ label: 'Legends', value: gameExtras.legends.join(', '), isList: true, items: gameExtras.legends })
+    }
+    if (gameExtras.players_to_watch?.length > 0) {
+      headerStats.push({ label: 'Players to Watch', value: gameExtras.players_to_watch.join(', '), isList: true, items: gameExtras.players_to_watch })
+    }
+    if (gameExtras.trivia_moments?.length > 0) {
+      headerStats.push({ label: 'Trivia Moments', value: gameExtras.trivia_moments.length.toString(), isList: true, items: gameExtras.trivia_moments })
+    }
+    if (deactivatedItemNames.length > 0) {
+      headerStats.push({ label: 'Deactivated', value: deactivatedItemNames.join(', '), isList: true, items: deactivatedItemNames })
+    }
+  } else {
+    // Admin view - show total items and categories
+    headerStats.push({ label: 'Total items', value: activeItemCount })
+    headerStats.push({ label: 'Categories', value: categories.length })
+    if (matchConfig.extraNotes) {
+      headerStats.push({ label: 'Notes', value: matchConfig.extraNotes })
+    }
+  }
   const competitionLogo = competition.logoDataUrl || competition.branding.logo
   const coverPrimary =
     competition.branding.primaryColor || '#8D0000'
@@ -388,11 +421,22 @@ body { margin: 0; padding: 0; font-family: 'Inter', 'Segoe UI', system-ui, sans-
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 flex-1 self-end">
                 {headerStats.map(stat => (
-                  <div key={stat.label} className="bg-white/15 rounded-2xl p-4 text-center backdrop-blur">
+                  <div key={stat.label} className={`bg-white/15 rounded-2xl p-4 backdrop-blur ${stat.isList ? 'text-left' : 'text-center'}`}>
                     <div className="text-xs uppercase tracking-[0.4em] text-white/70">
                       {stat.label}
                     </div>
-                    <div className="text-xl font-semibold mt-2">{stat.value}</div>
+                    {stat.isList && stat.items ? (
+                      <div className="mt-2 space-y-1">
+                        {stat.items.slice(0, 3).map((item, i) => (
+                          <div key={i} className="text-sm font-medium truncate">{item}</div>
+                        ))}
+                        {stat.items.length > 3 && (
+                          <div className="text-xs text-white/60">+{stat.items.length - 3} more</div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-xl font-semibold mt-2">{stat.value}</div>
+                    )}
                   </div>
                 ))}
               </div>

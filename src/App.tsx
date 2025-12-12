@@ -184,6 +184,8 @@ function PublicUserFlow({ template }: { template: AppData }) {
         onResetAllData={() => {}}
         onBack={() => setShowRunningOrder(false)}
         readOnly={true}
+        gameExtras={getGameExtras(selectedGame.id)}
+        deactivatedItemNames={getDeactivatedItemNames()}
       />
     </div>
   )
