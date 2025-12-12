@@ -419,30 +419,134 @@ body { margin: 0; padding: 0; font-family: 'Inter', 'Segoe UI', system-ui, sans-
                   </div>
                 </div>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 flex-1 self-end">
-                {headerStats.map(stat => (
-                  <div key={stat.label} className={`bg-white/15 rounded-2xl p-4 backdrop-blur ${stat.isList ? 'text-left' : 'text-center'}`}>
-                    <div className="text-xs uppercase tracking-[0.4em] text-white/70">
-                      {stat.label}
-                    </div>
-                    {stat.isList && stat.items ? (
-                      <div className="mt-2 space-y-1">
-                        {stat.items.slice(0, 3).map((item, i) => (
-                          <div key={i} className="text-sm font-medium truncate">{item}</div>
-                        ))}
-                        {stat.items.length > 3 && (
-                          <div className="text-xs text-white/60">+{stat.items.length - 3} more</div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="text-xl font-semibold mt-2">{stat.value}</div>
-                    )}
+              {/* Match Info - Kick-off & Venue */}
+              <div className="flex flex-col gap-3 self-end">
+                {matchConfig.matchTime && (
+                  <div className="bg-white/20 rounded-2xl px-6 py-4 backdrop-blur text-center">
+                    <div className="text-xs uppercase tracking-[0.3em] text-white/70 mb-1">Kick-off</div>
+                    <div className="text-2xl font-bold">{matchConfig.matchTime}</div>
                   </div>
-                ))}
+                )}
+                {selectedStadium && (
+                  <div className="bg-white/20 rounded-2xl px-6 py-4 backdrop-blur text-center">
+                    <div className="text-xs uppercase tracking-[0.3em] text-white/70 mb-1">Venue</div>
+                    <div className="text-lg font-semibold">{selectedStadium.name1}</div>
+                    <div className="text-sm text-white/80">{selectedStadium.city1}</div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </div>
+
+        {/* Game Extras Section - Only shown when gameExtras exist */}
+        {gameExtras && (gameExtras.influencers?.length > 0 || gameExtras.legends?.length > 0 || gameExtras.players_to_watch?.length > 0 || gameExtras.trivia_moments?.length > 0 || deactivatedItemNames.length > 0) && (
+          <div className="mb-8">
+            <div className="glass-card border-0 rounded-3xl shadow-lg bg-white/90 backdrop-blur p-6">
+              <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500"></span>
+                Match Information
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Influencers */}
+                {gameExtras.influencers?.length > 0 && (
+                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-4 border border-purple-200">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center">
+                        <span className="text-white text-xs">👤</span>
+                      </div>
+                      <h3 className="font-semibold text-purple-800">Influencers</h3>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {gameExtras.influencers.map((name, i) => (
+                        <span key={i} className="bg-white text-purple-700 px-3 py-1 rounded-full text-sm shadow-sm border border-purple-200">
+                          {name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Legends */}
+                {gameExtras.legends?.length > 0 && (
+                  <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-2xl p-4 border border-amber-200">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center">
+                        <span className="text-white text-xs">⭐</span>
+                      </div>
+                      <h3 className="font-semibold text-amber-800">Legends</h3>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {gameExtras.legends.map((name, i) => (
+                        <span key={i} className="bg-white text-amber-700 px-3 py-1 rounded-full text-sm shadow-sm border border-amber-200">
+                          {name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Players to Watch */}
+                {gameExtras.players_to_watch?.length > 0 && (
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-4 border border-blue-200">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
+                        <span className="text-white text-xs">👁</span>
+                      </div>
+                      <h3 className="font-semibold text-blue-800">Players to Watch</h3>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {gameExtras.players_to_watch.map((name, i) => (
+                        <span key={i} className="bg-white text-blue-700 px-3 py-1 rounded-full text-sm shadow-sm border border-blue-200">
+                          {name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Trivia Moments */}
+                {gameExtras.trivia_moments?.length > 0 && (
+                  <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-2xl p-4 border border-teal-200 md:col-span-2 lg:col-span-1">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-8 h-8 rounded-full bg-teal-500 flex items-center justify-center">
+                        <span className="text-white text-xs">💡</span>
+                      </div>
+                      <h3 className="font-semibold text-teal-800">Trivia Moments</h3>
+                    </div>
+                    <ul className="space-y-2">
+                      {gameExtras.trivia_moments.map((trivia, i) => (
+                        <li key={i} className="text-sm text-teal-700 flex items-start gap-2">
+                          <span className="text-teal-400 mt-0.5">•</span>
+                          <span>{trivia}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Deactivated Items */}
+                {deactivatedItemNames.length > 0 && (
+                  <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-2xl p-4 border border-red-200">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center">
+                        <span className="text-white text-xs">⊘</span>
+                      </div>
+                      <h3 className="font-semibold text-red-800">Not Active Today</h3>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {deactivatedItemNames.map((name, i) => (
+                        <span key={i} className="bg-white text-red-600 px-3 py-1 rounded-full text-sm shadow-sm border border-red-200 line-through opacity-70">
+                          {name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Category overview */}
         {categories.length > 0 && (
