@@ -6,6 +6,8 @@ export interface GameExtras {
   influencers: string[]
   legends: string[]
   players_to_watch: string[]
+  trivia_moments: string[]
+  deactivated_items: string[] // IDs of running order items to hide for this game
 }
 
 export function useGameExtras() {
@@ -31,7 +33,9 @@ export function useGameExtras() {
           game_id: item.game_id,
           influencers: item.influencers || [],
           legends: item.legends || [],
-          players_to_watch: item.players_to_watch || []
+          players_to_watch: item.players_to_watch || [],
+          trivia_moments: item.trivia_moments || [],
+          deactivated_items: item.deactivated_items || []
         }
       })
       setExtras(extrasMap)
@@ -49,7 +53,7 @@ export function useGameExtras() {
   // Save game extras
   const saveGameExtras = async (
     gameId: string, 
-    data: { influencers?: string[]; legends?: string[]; playersToWatch?: string[] },
+    data: { influencers?: string[]; legends?: string[]; playersToWatch?: string[]; triviaMoments?: string[]; deactivatedItems?: string[] },
     userEmail?: string
   ): Promise<boolean> => {
     setSaving(true)
@@ -61,6 +65,8 @@ export function useGameExtras() {
           influencers: data.influencers || [],
           legends: data.legends || [],
           players_to_watch: data.playersToWatch || [],
+          trivia_moments: data.triviaMoments || [],
+          deactivated_items: data.deactivatedItems || [],
           updated_at: new Date().toISOString(),
           updated_by: userEmail || null
         }, {
@@ -79,7 +85,9 @@ export function useGameExtras() {
           game_id: gameId,
           influencers: data.influencers || [],
           legends: data.legends || [],
-          players_to_watch: data.playersToWatch || []
+          players_to_watch: data.playersToWatch || [],
+          trivia_moments: data.triviaMoments || [],
+          deactivated_items: data.deactivatedItems || []
         }
       }))
 

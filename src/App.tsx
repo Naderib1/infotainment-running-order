@@ -3,6 +3,8 @@ import { CompetitionSetup } from './components/CompetitionSetup'
 import { RunningOrderTemplate } from './components/RunningOrderTemplate'
 import { GameSelector } from './components/GameSelector'
 import { GameExtrasEditor } from './components/GameExtrasEditor'
+import { CompactGameSchedule } from './components/CompactGameSchedule'
+import { GameInfoPage } from './components/GameInfoPage'
 import { Auth } from './components/Auth'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { useSupabaseData } from './hooks/useSupabaseData'
@@ -55,9 +57,11 @@ const initialAppData: AppData = {
   dataVersion: 2
 }
 
-// Public user flow component - shows game selector first, then running order
+// Public user flow: Compact Schedule → Game Info → Running Order
 function PublicUserFlow({ template }: { template: AppData }) {
   const [selectedGame, setSelectedGame] = useState<Game | null>(null)
+  const [showRunningOrder, setShowRunningOrder] = useState(false)
+  const { getGameExtras } = useGameExtras()
   
   // When a game is selected, update the template with game info
   const getTemplateWithGameInfo = (): AppData => {
@@ -88,46 +92,87 @@ function PublicUserFlow({ template }: { template: AppData }) {
       selectedVenue: stadium?.id || ''
     }
   }
+
+  // Get deactivated item names for display
+  const getDeactivatedItemNames = (): string[] => {
+    if (!selectedGame) return []
+    const extras = getGameExtras(selectedGame.id)
+    if (!extras?.deactivated_items?.length) return []
+    return extras.deactivated_items
+      .map(id => template.runningOrder.find(item => item.id === id)?.title)
+      .filter(Boolean) as string[]
+  }
+
+  // Filter out deactivated items from running order
+  const getFilteredRunningOrder = (): RunningOrderItem[] => {
+    if (!selectedGame) return template.runningOrder
+    const extras = getGameExtras(selectedGame.id)
+    if (!extras?.deactivated_items?.length) return template.runningOrder
+    return template.runningOrder.filter(item => !extras.deactivated_items.includes(item.id))
+  }
   
+  // Step 1: Show compact schedule
   if (!selectedGame) {
     return (
       <div className="min-h-screen">
-        {/* Admin login link at bottom */}
         <div className="fixed bottom-4 right-4 z-50 print:hidden">
           <Auth mode="link" />
         </div>
-        
-        <GameSelector 
-          onSelectGame={(game) => setSelectedGame(game)}
+        <CompactGameSchedule onSelectGame={(game) => setSelectedGame(game)} />
+      </div>
+    )
+  }
+
+  // Step 2: Show game info page
+  if (!showRunningOrder) {
+    const extras = getGameExtras(selectedGame.id)
+    return (
+      <div className="min-h-screen">
+        <div className="fixed top-4 left-4 z-50 print:hidden">
+          <Button
+            variant="outline"
+            onClick={() => setSelectedGame(null)}
+            className="flex items-center gap-2 bg-white/80 backdrop-blur shadow-lg"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Back to Schedule
+          </Button>
+        </div>
+        <div className="fixed bottom-4 right-4 z-50 print:hidden">
+          <Auth mode="link" />
+        </div>
+        <GameInfoPage
+          game={selectedGame}
+          extras={extras}
+          deactivatedItemNames={getDeactivatedItemNames()}
+          onContinue={() => setShowRunningOrder(true)}
         />
       </div>
     )
   }
   
+  // Step 3: Show running order
   const gameTemplate = getTemplateWithGameInfo()
+  const filteredRunningOrder = getFilteredRunningOrder()
   
   return (
     <div className="min-h-screen">
-      {/* Back to games button */}
       <div className="fixed top-4 left-4 z-50 print:hidden">
         <Button
           variant="outline"
-          onClick={() => setSelectedGame(null)}
+          onClick={() => setShowRunningOrder(false)}
           className="flex items-center gap-2 bg-white/80 backdrop-blur shadow-lg"
         >
           <ChevronLeft className="h-4 w-4" />
-          Back to Games
+          Back to Match Info
         </Button>
       </div>
-      
-      {/* Admin login link at bottom */}
       <div className="fixed bottom-4 right-4 z-50 print:hidden">
         <Auth mode="link" />
       </div>
-      
       <RunningOrderTemplate
         competition={gameTemplate.competition}
-        runningOrder={gameTemplate.runningOrder}
+        runningOrder={filteredRunningOrder}
         categories={gameTemplate.categories}
         selectedVenue={gameTemplate.selectedVenue}
         matchConfig={gameTemplate.matchConfig}
@@ -137,7 +182,7 @@ function PublicUserFlow({ template }: { template: AppData }) {
         onMatchConfigChange={() => {}}
         onCompetitionChange={() => {}}
         onResetAllData={() => {}}
-        onBack={() => setSelectedGame(null)}
+        onBack={() => setShowRunningOrder(false)}
         readOnly={true}
       />
     </div>
@@ -460,6 +505,7 @@ function AppContent() {
             <GameExtrasEditor
               game={adminSelectedGame}
               extras={getGameExtras(adminSelectedGame.id)}
+              runningOrderItems={appData.runningOrder}
               onSave={async (data) => {
                 return await saveGameExtras(adminSelectedGame.id, data, user?.email || undefined)
               }}
