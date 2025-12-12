@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { CompetitionSetup } from './components/CompetitionSetup'
 import { RunningOrderTemplate } from './components/RunningOrderTemplate'
+import { GameSelector } from './components/GameSelector'
 import { Auth } from './components/Auth'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { useSupabaseData } from './hooks/useSupabaseData'
@@ -9,8 +10,9 @@ import { useDefaultTemplate } from './hooks/useDefaultTemplate'
 import { Competition, RunningOrderItem, AppData, MatchConfig } from './types'
 import { defaultCategories, defaultRunningOrder, defaultStadiums, defaultTeams } from './data/defaultCategories'
 import { ensureAppDataShape } from './lib/ensureShape'
-import { LogOut, Save, Cloud, CloudOff, User, Shield, Upload } from 'lucide-react'
+import { LogOut, Save, Cloud, CloudOff, User, Shield, Upload, ChevronLeft } from 'lucide-react'
 import { Button } from './components/ui/button'
+import { Game } from './data/games'
 
 // Path to the default template file in the public folder
 const DEFAULT_TEMPLATE_URL = '/default-template.json'
@@ -49,6 +51,95 @@ const initialAppData: AppData = {
   selectedVenue: '',
   matchConfig: initialMatchConfig,
   dataVersion: 2
+}
+
+// Public user flow component - shows game selector first, then running order
+function PublicUserFlow({ template }: { template: AppData }) {
+  const [selectedGame, setSelectedGame] = useState<Game | null>(null)
+  
+  // When a game is selected, update the template with game info
+  const getTemplateWithGameInfo = (): AppData => {
+    if (!selectedGame) return template
+    
+    // Find matching teams and stadium from the template
+    const teamA = template.competition.teams.find(t => 
+      t.name1.toLowerCase() === selectedGame.teamA.toLowerCase()
+    )
+    const teamB = template.competition.teams.find(t => 
+      t.name1.toLowerCase() === selectedGame.teamB.toLowerCase()
+    )
+    const stadium = template.competition.stadiums.find(s => 
+      s.name1.toLowerCase().includes(selectedGame.stadium.toLowerCase().split(' ')[0]) ||
+      selectedGame.stadium.toLowerCase().includes(s.name1.toLowerCase().split(' ')[0])
+    )
+    
+    return {
+      ...template,
+      matchConfig: {
+        ...template.matchConfig,
+        teamAId: teamA?.id || '',
+        teamBId: teamB?.id || '',
+        stadiumId: stadium?.id || '',
+        matchTime: `${selectedGame.date} ${selectedGame.time}`,
+        extraNotes: `Match #${selectedGame.matchNumber}`
+      },
+      selectedVenue: stadium?.id || ''
+    }
+  }
+  
+  if (!selectedGame) {
+    return (
+      <div className="min-h-screen">
+        {/* Admin login link at bottom */}
+        <div className="fixed bottom-4 right-4 z-50 print:hidden">
+          <Auth mode="link" />
+        </div>
+        
+        <GameSelector 
+          onSelectGame={(game) => setSelectedGame(game)}
+        />
+      </div>
+    )
+  }
+  
+  const gameTemplate = getTemplateWithGameInfo()
+  
+  return (
+    <div className="min-h-screen">
+      {/* Back to games button */}
+      <div className="fixed top-4 left-4 z-50 print:hidden">
+        <Button
+          variant="outline"
+          onClick={() => setSelectedGame(null)}
+          className="flex items-center gap-2 bg-white/80 backdrop-blur shadow-lg"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Back to Games
+        </Button>
+      </div>
+      
+      {/* Admin login link at bottom */}
+      <div className="fixed bottom-4 right-4 z-50 print:hidden">
+        <Auth mode="link" />
+      </div>
+      
+      <RunningOrderTemplate
+        competition={gameTemplate.competition}
+        runningOrder={gameTemplate.runningOrder}
+        categories={gameTemplate.categories}
+        selectedVenue={gameTemplate.selectedVenue}
+        matchConfig={gameTemplate.matchConfig}
+        onUpdateRunningOrder={() => {}}
+        onUpdateCategories={() => {}}
+        onVenueChange={() => {}}
+        onMatchConfigChange={() => {}}
+        onCompetitionChange={() => {}}
+        onResetAllData={() => {}}
+        onBack={() => setSelectedGame(null)}
+        readOnly={true}
+      />
+    </div>
+  )
 }
 
 function AppContent() {
@@ -197,32 +288,9 @@ function AppContent() {
     )
   }
 
-  // PUBLIC USER MODE: Use the same RunningOrderTemplate but in read-only mode
+  // PUBLIC USER MODE: Show game selector first, then running order
   if (!user && template) {
-    return (
-      <div className="min-h-screen">
-        {/* Admin login link at bottom */}
-        <div className="fixed bottom-4 right-4 z-50 print:hidden">
-          <Auth mode="link" />
-        </div>
-        
-        <RunningOrderTemplate
-          competition={template.competition}
-          runningOrder={template.runningOrder}
-          categories={template.categories}
-          selectedVenue={template.selectedVenue}
-          matchConfig={template.matchConfig}
-          onUpdateRunningOrder={() => {}}
-          onUpdateCategories={() => {}}
-          onVenueChange={() => {}}
-          onMatchConfigChange={() => {}}
-          onCompetitionChange={() => {}}
-          onResetAllData={() => {}}
-          onBack={() => {}}
-          readOnly={true}
-        />
-      </div>
-    )
+    return <PublicUserFlow template={template} />
   }
   
   // Show login for admins if no template exists yet
