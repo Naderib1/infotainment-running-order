@@ -17,8 +17,6 @@ import {
   Table,
   LayoutGrid,
   MapPin,
-  Calendar,
-  Trophy,
   RotateCcw
 } from 'lucide-react'
 import { applyTokens, TokenContext } from '@/lib/tokens'
@@ -100,12 +98,6 @@ export function RunningOrderTemplate({
     name2: useGenericTeams
       ? genericTeamLabels.b.name2
       : teamB?.name2 || genericTeamLabels.b.name2
-  }
-
-  const formatDate = (value: string) => {
-    if (!value) return ''
-    const date = new Date(value)
-    return isNaN(date.getTime()) ? '' : date.toLocaleDateString()
   }
 
   const englishTeamSeparator = useGenericTeams ? ' / ' : ' vs '
@@ -374,7 +366,7 @@ body { margin: 0; padding: 0; font-family: 'Inter', 'Segoe UI', system-ui, sans-
             className="relative overflow-hidden rounded-[40px] text-white shadow-2xl"
             style={{
               background: `linear-gradient(135deg, ${coverPrimary}, ${coverSecondary})`,
-              minHeight: '420px',
+              minHeight: '280px',
               padding: '48px'
             }}
           >
@@ -382,41 +374,29 @@ body { margin: 0; padding: 0; font-family: 'Inter', 'Segoe UI', system-ui, sans-
               <div className="absolute -top-20 -left-20 w-80 h-80 rounded-full bg-white/15 blur-3xl" />
               <div className="absolute -bottom-24 -right-16 w-96 h-96 rounded-full bg-white/10 blur-2xl" />
             </div>
-            <div className="relative z-10 flex flex-col gap-10 lg:flex-row lg:items-center lg:justify-between h-full">
-              <div className="flex flex-col gap-6 max-w-2xl">
-                <div className="flex items-center gap-4">
-                  <div className="bg-white/15 rounded-3xl p-4 shadow-lg backdrop-blur">
-                    <Trophy className="h-12 w-12 text-white" />
+            <div className="relative z-10 flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between h-full">
+              <div className="flex items-center gap-8">
+                {/* Logo - bigger */}
+                {competitionLogo && (
+                  <div className="bg-white/15 rounded-3xl p-5 backdrop-blur shadow-lg">
+                    <img
+                      src={competitionLogo}
+                      alt="Competition logo"
+                      className="h-32 w-auto object-contain"
+                    />
                   </div>
-                  {competitionLogo && (
-                    <div className="bg-white/10 rounded-3xl p-4 backdrop-blur shadow">
-                      <img
-                        src={competitionLogo}
-                        alt="Competition logo"
-                        className="h-24 w-auto object-contain"
-                      />
-                    </div>
-                  )}
-                </div>
+                )}
+                {/* Team names - bigger and prominent */}
                 <div>
-                  <p className="text-sm uppercase tracking-[0.5em] text-white/70">
+                  <p className="text-sm uppercase tracking-[0.4em] text-white/70 mb-2">
                     Infotainment Running Order
                   </p>
-                  <h1 className="text-4xl font-bold leading-tight mt-4">
-                    {competition.name1}
-                  </h1>
                   {teamLine && (
-                    <p className="text-xl font-semibold mt-6">{teamLine}</p>
+                    <h1 className="text-4xl md:text-5xl font-bold leading-tight">{teamLine}</h1>
                   )}
                   {teamLineSecondary && (
-                    <p className="text-base text-white/80">{teamLineSecondary}</p>
+                    <p className="text-xl md:text-2xl text-white/90 mt-2 font-medium">{teamLineSecondary}</p>
                   )}
-                  <div className="flex items-center gap-2 text-white/80 mt-6">
-                    <Calendar className="h-5 w-5" />
-                    <span className="text-lg">
-                      {formatDate(competition.startDate) || '-'} – {formatDate(competition.endDate) || '-'}
-                    </span>
-                  </div>
                 </div>
               </div>
               {/* Match Info - Kick-off & Venue */}
@@ -606,7 +586,8 @@ body { margin: 0; padding: 0; font-family: 'Inter', 'Segoe UI', system-ui, sans-
           )}
         </div>
 
-        {/* Match Configuration */}
+        {/* Match Configuration - Admin only */}
+        {!readOnly && (
         <Card className="glass-card border-0 mb-8">
           <CardHeader>
             <div className="flex items-center justify-between gap-4">
@@ -768,6 +749,7 @@ body { margin: 0; padding: 0; font-family: 'Inter', 'Segoe UI', system-ui, sans-
             </div>
           </CardContent>
         </Card>
+        )}
 
         {/* Category Management - Admin only */}
         {!readOnly && (
