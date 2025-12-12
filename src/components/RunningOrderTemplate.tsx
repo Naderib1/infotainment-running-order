@@ -13,6 +13,7 @@ import {
   ChevronLeft, 
   Plus, 
   FileText,
+  Download,
   Table,
   LayoutGrid,
   MapPin,
@@ -23,6 +24,7 @@ import {
 import { applyTokens, TokenContext } from '@/lib/tokens'
 import { ensureAppDataShape } from '@/lib/ensureShape'
 import { getCategoryPaletteEntry } from '@/data/categoryPalette'
+import { downloadFile } from '@/lib/utils'
 
 interface RunningOrderTemplateProps {
   competition: Competition
@@ -200,6 +202,33 @@ export function RunningOrderTemplate({
   const coverSecondary =
     competition.branding.secondaryColor || '#640000'
 
+  const exportToHTML = () => {
+    if (!pdfContentRef.current) return
+    const exportMarkup = pdfContentRef.current.innerHTML
+    const css = `:root { color-scheme: light; }
+* { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; box-sizing: border-box; }
+body { margin: 0; padding: 0; font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; background: #fff; color: #0f172a; }
+.export-wrapper { max-width: 210mm; margin: 0 auto; }
+.glass-card { background: rgba(255,255,255,0.95); border: 1px solid rgba(0,0,0,0.1); border-radius: 12px; }
+.category-section { page-break-before: always; }
+.running-order-card { page-break-inside: avoid; margin-bottom: 5mm; }
+@page { size: A4; margin: 10mm 8mm; }`
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>${competition.name1} - Infotainment Running Order</title>
+<script src="https://cdn.tailwindcss.com"><\/script>
+<style>${css}</style>
+</head>
+<body>
+<div class="export-wrapper">${exportMarkup}</div>
+</body>
+</html>`
+    const filename = `${competition.name1} - Infotainment Running Order.html`
+    downloadFile(html, filename, 'text/html')
+  }
+
   const handlePrintView = () => {
     if (typeof window === 'undefined') return
     const mediaQuery = window.matchMedia('print')
@@ -273,8 +302,8 @@ export function RunningOrderTemplate({
     <>
     <div className="app-shell min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900 p-4">
       <div className="max-w-7xl mx-auto">
-        {/* Header controls */}
-        <div className="flex items-center justify-between mb-6">
+        {/* Header controls - with padding top to avoid overlap with fixed nav */}
+        <div className="flex items-center justify-between mb-6 pt-14">
           <Button
             variant="ghost"
             onClick={onBack}
@@ -285,6 +314,15 @@ export function RunningOrderTemplate({
           </Button>
 
           <div className="flex items-center gap-3">
+            {/* Export HTML Button */}
+            <Button
+              onClick={exportToHTML}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Export HTML
+            </Button>
             {/* Print Button */}
             <Button
               onClick={handlePrintView}
