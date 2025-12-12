@@ -2,11 +2,13 @@ import { useState, useEffect, useCallback } from 'react'
 import { CompetitionSetup } from './components/CompetitionSetup'
 import { RunningOrderTemplate } from './components/RunningOrderTemplate'
 import { GameSelector } from './components/GameSelector'
+import { GameExtrasEditor } from './components/GameExtrasEditor'
 import { Auth } from './components/Auth'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { useSupabaseData } from './hooks/useSupabaseData'
 import { useAdmin } from './hooks/useAdmin'
 import { useDefaultTemplate } from './hooks/useDefaultTemplate'
+import { useGameExtras } from './hooks/useGameExtras'
 import { Competition, RunningOrderItem, AppData, MatchConfig } from './types'
 import { defaultCategories, defaultRunningOrder, defaultStadiums, defaultTeams } from './data/defaultCategories'
 import { ensureAppDataShape } from './lib/ensureShape'
@@ -146,6 +148,11 @@ function AppContent() {
   const { user, loading: authLoading, signOut, isConfigured } = useAuth()
   const { isAdmin, loading: adminLoading } = useAdmin()
   const { template, loading: templateLoading, saving: publishingSaving, saveTemplate } = useDefaultTemplate()
+  const { extras: gameExtras, saving: savingExtras, saveGameExtras, getGameExtras } = useGameExtras()
+  
+  // Admin game management state
+  const [adminSelectedGame, setAdminSelectedGame] = useState<Game | null>(null)
+  const [showGameManager, setShowGameManager] = useState(false)
   
   const [currentStep, setCurrentStep] = useState(() => {
     if (typeof window === 'undefined') return 1
@@ -383,10 +390,10 @@ function AppContent() {
         <div className="flex items-center bg-white/80 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70 rounded-full shadow-lg backdrop-blur px-1 py-1">
           <button
             type="button"
-            onClick={() => setCurrentStep(1)}
+            onClick={() => { setCurrentStep(1); setShowGameManager(false) }}
             className={[
               'px-4 py-1.5 text-sm rounded-full transition',
-              currentStep === 1
+              currentStep === 1 && !showGameManager
                 ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow'
                 : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/60'
             ].join(' ')}
@@ -395,20 +402,74 @@ function AppContent() {
           </button>
           <button
             type="button"
-            onClick={() => setCurrentStep(2)}
+            onClick={() => { setCurrentStep(2); setShowGameManager(false) }}
             className={[
               'px-4 py-1.5 text-sm rounded-full transition',
-              currentStep === 2
+              currentStep === 2 && !showGameManager
                 ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow'
                 : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/60'
             ].join(' ')}
           >
             Running Order
           </button>
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => { setShowGameManager(true); setAdminSelectedGame(null) }}
+              className={[
+                'px-4 py-1.5 text-sm rounded-full transition',
+                showGameManager
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/60'
+              ].join(' ')}
+            >
+              Manage Games
+            </button>
+          )}
         </div>
       </div>
 
-      {currentStep === 1 && (
+      {/* Admin Game Manager */}
+      {showGameManager && isAdmin && !adminSelectedGame && (
+        <GameSelector 
+          onSelectGame={(game) => setAdminSelectedGame(game)}
+          isAdmin={true}
+          gameExtras={Object.fromEntries(
+            Object.entries(gameExtras).map(([id, data]) => [id, {
+              influencers: data.influencers,
+              legends: data.legends,
+              playersToWatch: data.players_to_watch
+            }])
+          )}
+        />
+      )}
+
+      {/* Admin Game Extras Editor */}
+      {showGameManager && isAdmin && adminSelectedGame && (
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900 p-4 pt-20">
+          <div className="max-w-2xl mx-auto">
+            <Button
+              variant="outline"
+              onClick={() => setAdminSelectedGame(null)}
+              className="mb-4 flex items-center gap-2"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Back to Games
+            </Button>
+            
+            <GameExtrasEditor
+              game={adminSelectedGame}
+              extras={getGameExtras(adminSelectedGame.id)}
+              onSave={async (data) => {
+                return await saveGameExtras(adminSelectedGame.id, data, user?.email || undefined)
+              }}
+              saving={savingExtras}
+            />
+          </div>
+        </div>
+      )}
+
+      {!showGameManager && currentStep === 1 && (
         <CompetitionSetup
           competition={appData.competition}
           onCompetitionChange={handleCompetitionChange}
@@ -416,7 +477,7 @@ function AppContent() {
         />
       )}
 
-      {currentStep === 2 && (
+      {!showGameManager && currentStep === 2 && (
         <RunningOrderTemplate
           competition={appData.competition}
           runningOrder={appData.runningOrder}
