@@ -24,7 +24,7 @@ export function useAdmin() {
         if (error) {
           console.error('Error checking admin status:', error)
           // If admins table doesn't exist or query fails, check if user email matches hardcoded admin
-          if (user.email.toLowerCase() === 'nader.ibrahim@cafonline.com') {
+          if (user.email.toLowerCase() === 'naderibs@gmail.com') {
             console.log('Fallback: User is hardcoded admin')
             setIsAdmin(true)
           } else {
@@ -40,7 +40,7 @@ export function useAdmin() {
           setIsAdmin(isUserAdmin)
           
           // Fallback if table is empty but user is the main admin
-          if (!isUserAdmin && user.email.toLowerCase() === 'nader.ibrahim@cafonline.com') {
+          if (!isUserAdmin && user.email.toLowerCase() === 'naderibs@gmail.com') {
             console.log('Fallback: User is hardcoded admin (table empty)')
             setIsAdmin(true)
           }
@@ -48,7 +48,7 @@ export function useAdmin() {
       } catch (err) {
         console.error('Error checking admin:', err)
         // Fallback for hardcoded admin
-        if (user.email.toLowerCase() === 'nader.ibrahim@cafonline.com') {
+        if (user.email.toLowerCase() === 'naderibs@gmail.com') {
           setIsAdmin(true)
         } else {
           setIsAdmin(false)
