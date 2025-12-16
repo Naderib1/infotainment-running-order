@@ -3,8 +3,7 @@ import { ChevronLeft, FileText, Download, Users } from 'lucide-react'
 import { Button } from './ui/button'
 import { Card, CardContent } from './ui/card'
 import { 
-  FanZoneSchedule, 
-  FanZoneItem, 
+  FanZoneSchedule,
   defaultFanZoneSchedule 
 } from '../data/fanZoneSchedule'
 import { downloadFile } from '../lib/utils'
