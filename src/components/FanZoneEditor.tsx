@@ -129,10 +129,17 @@ export function FanZoneEditor({ schedule, onSave, saving }: FanZoneEditorProps) 
   }
 
   const addItem = () => {
+    // Find the earliest time in the current schedule and add 5 minutes before it
+    const earliestTime = sortedItems.length > 0 ? parseTime(sortedItems[0].time) - 5 : -120
+    const hours = Math.floor(Math.abs(earliestTime) / 60)
+    const minutes = Math.abs(earliestTime) % 60
+    const sign = earliestTime < 0 ? '-' : '+'
+    const newTime = `${sign}${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`
+    
     const newItem: FanZoneItem = {
       id: generateId(),
       type: 'music',
-      time: '-00:00:00',
+      time: newTime,
       title: 'New Item',
       screens: {
         screen1: '',
