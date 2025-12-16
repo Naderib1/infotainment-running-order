@@ -69,17 +69,48 @@ function PublicUserFlow({ template }: { template: AppData }) {
   const { getGameExtras } = useGameExtras()
   const { schedule: fanZoneSchedule } = useFanZoneSchedule()
   
+  // Team name aliases for matching games to template teams
+  const teamNameAliases: Record<string, string> = {
+    "cote d'ivoire": 'ivory-coast',
+    'ivory coast': 'ivory-coast',
+    'dr congo': 'dr-congo',
+    'democratic republic of congo': 'dr-congo',
+    'south africa': 'south-africa',
+    'burkina faso': 'burkina-faso',
+    'equatorial guinea': 'equatorial-guinea'
+  }
+
+  // Find team by name with alias support
+  const findTeamByName = (name: string) => {
+    const normalizedName = name.toLowerCase().trim()
+    // First try direct match
+    let team = template.competition.teams.find(t => 
+      t.name1.toLowerCase() === normalizedName
+    )
+    if (team) return team
+    
+    // Try alias lookup
+    const aliasId = teamNameAliases[normalizedName]
+    if (aliasId) {
+      team = template.competition.teams.find(t => t.id === aliasId)
+      if (team) return team
+    }
+    
+    // Try partial match (for cases like "1D", "2A" in knockout rounds)
+    team = template.competition.teams.find(t => 
+      t.name1.toLowerCase().includes(normalizedName) ||
+      normalizedName.includes(t.name1.toLowerCase())
+    )
+    return team
+  }
+
   // When a game is selected, update the template with game info
   const getTemplateWithGameInfo = (): AppData => {
     if (!selectedGame) return template
     
     // Find matching teams and stadium from the template
-    const teamA = template.competition.teams.find(t => 
-      t.name1.toLowerCase() === selectedGame.teamA.toLowerCase()
-    )
-    const teamB = template.competition.teams.find(t => 
-      t.name1.toLowerCase() === selectedGame.teamB.toLowerCase()
-    )
+    const teamA = findTeamByName(selectedGame.teamA)
+    const teamB = findTeamByName(selectedGame.teamB)
     const stadium = template.competition.stadiums.find(s => 
       s.name1.toLowerCase().includes(selectedGame.stadium.toLowerCase().split(' ')[0]) ||
       selectedGame.stadium.toLowerCase().includes(s.name1.toLowerCase().split(' ')[0])
