@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Plus, Trash2, Save, Edit2, Check, X, RotateCcw } from 'lucide-react'
 import { Button } from './ui/button'
 import { Card, CardContent } from './ui/card'
@@ -97,8 +97,16 @@ export function FanZoneEditor({ schedule, onSave, saving }: FanZoneEditorProps) 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingData, setEditingData] = useState<Partial<FanZoneItem>>({})
 
+  // Sync local state when schedule prop changes (e.g., after save/reload)
+  useEffect(() => {
+    if (!hasChanges) {
+      setLocalSchedule(schedule)
+    }
+  }, [schedule, hasChanges])
+
   // Sort items by time for display
   const sortedItems = useMemo(() => {
+    console.log('Sorting items, count:', localSchedule.items.length)
     return [...localSchedule.items].sort((a, b) => parseTime(a.time) - parseTime(b.time))
   }, [localSchedule.items])
 
@@ -132,7 +140,11 @@ export function FanZoneEditor({ schedule, onSave, saving }: FanZoneEditorProps) 
         screen3: ''
       }
     }
-    updateSchedule({ ...localSchedule, items: [...localSchedule.items, newItem] })
+    console.log('Adding new item:', newItem)
+    console.log('Current items count:', localSchedule.items.length)
+    const newSchedule = { ...localSchedule, items: [...localSchedule.items, newItem] }
+    console.log('New items count:', newSchedule.items.length)
+    updateSchedule(newSchedule)
   }
 
   const deleteItem = (id: string) => {
