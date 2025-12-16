@@ -25,10 +25,49 @@ const typeToIndex: Record<FanZoneItem['type'], number> = {
 }
 
 // Parse time string to minutes for sorting
-// Supports formats: -01:30:00, +00:15:00, T-120, T-60, KO, HT, FT, etc.
+// Order: negative times → positive times → HT items → FT items
+// Each section sorted by time within itself
 const parseTime = (timeStr: string): number => {
-  if (!timeStr) return 9999
+  if (!timeStr) return 99999
   const s = timeStr.trim().toUpperCase()
+  
+  // Base offsets for different phases:
+  // Negative times: -10000 to -1 (before kick-off)
+  // Positive times: 0 to 9999 (after kick-off, before HT)
+  // HT items: 10000 to 19999
+  // FT items: 20000 to 29999
+  // Unknown: 99999
+  
+  // Check for HT prefix first
+  if (s.startsWith('HT')) {
+    // Extract any time suffix like HT+05:00 or HT-02:00
+    const htTimeMatch = s.match(/^HT\s*([+-])?(\d{1,2}):(\d{2})(?::(\d{2}))?$/)
+    if (htTimeMatch) {
+      const sign = htTimeMatch[1] === '-' ? -1 : 1
+      const hours = parseInt(htTimeMatch[2], 10)
+      const minutes = parseInt(htTimeMatch[3], 10)
+      return 10000 + sign * (hours * 60 + minutes)
+    }
+    // Plain HT or HT with text
+    if (s.includes('START')) return 10000
+    if (s.includes('WINDOW')) return 10005
+    if (s.includes('END')) return 10010
+    return 10000
+  }
+  
+  // Check for FT prefix
+  if (s.startsWith('FT')) {
+    // Extract any time suffix like FT+05:00 or FT-02:00
+    const ftTimeMatch = s.match(/^FT\s*([+-])?(\d{1,2}):(\d{2})(?::(\d{2}))?$/)
+    if (ftTimeMatch) {
+      const sign = ftTimeMatch[1] === '-' ? -1 : 1
+      const hours = parseInt(ftTimeMatch[2], 10)
+      const minutes = parseInt(ftTimeMatch[3], 10)
+      return 20000 + sign * (hours * 60 + minutes)
+    }
+    // Plain FT or FT with text
+    return 20000
+  }
   
   // Handle -HH:MM:SS or +HH:MM:SS format (e.g., -01:30:00, +00:15:00)
   const hhmmssMatch = s.match(/^([+-])?(\d{1,2}):(\d{2}):(\d{2})$/)
@@ -36,7 +75,9 @@ const parseTime = (timeStr: string): number => {
     const sign = hhmmssMatch[1] === '-' ? -1 : 1
     const hours = parseInt(hhmmssMatch[2], 10)
     const minutes = parseInt(hhmmssMatch[3], 10)
-    return sign * (hours * 60 + minutes)
+    const value = sign * (hours * 60 + minutes)
+    // Negative times get negative values, positive times get positive values
+    return value
   }
   
   // Handle -HH:MM or +HH:MM format (e.g., -01:30, +00:15)
@@ -45,7 +86,8 @@ const parseTime = (timeStr: string): number => {
     const sign = hhmmMatch[1] === '-' ? -1 : 1
     const hours = parseInt(hhmmMatch[2], 10)
     const minutes = parseInt(hhmmMatch[3], 10)
-    return sign * (hours * 60 + minutes)
+    const value = sign * (hours * 60 + minutes)
+    return value
   }
   
   // Handle T-XXX format (e.g., T-120 = 120 minutes before KO)
@@ -60,21 +102,13 @@ const parseTime = (timeStr: string): number => {
     return parseInt(tPlusMatch[1], 10)
   }
   
-  // Handle special markers
-  if (s.includes('KO') && !s.includes('HT') && !s.includes('FT')) return 0
-  if (s.includes('HT START') || s === 'HT START') return 45
-  if (s.includes('HT WINDOW') || s === 'HT WINDOW') return 50
-  if (s.includes('HT END') || s === 'HT END') return 55
-  if (s.includes('2H') || s.includes('SECOND HALF')) return 60
-  if (s.includes('FT')) return 90
-  if (s.includes('INTER-MATCH')) return 100
-  if (s.includes('AFTER FINAL')) return 110
-  if (s.includes('CLOSE') || s.includes('CLOSURE')) return 120
+  // Handle KO (kick-off = 0)
+  if (s === 'KO' || s.includes('KICK')) return 0
   
-  // Handle +XX format (e.g., +45 = 45 minutes after FT)
+  // Handle plain +XX format (e.g., +45)
   const plusMatch = s.match(/^\+(\d+)/)
   if (plusMatch) {
-    return 90 + parseInt(plusMatch[1], 10)
+    return parseInt(plusMatch[1], 10)
   }
   
   // Fallback: try to parse as HH:MM
@@ -83,7 +117,7 @@ const parseTime = (timeStr: string): number => {
     return parts[0] * 60 + parts[1]
   }
   
-  return 9999
+  return 99999
 }
 
 export function FanZoneRunningOrder({ schedule = defaultFanZoneSchedule, onBack }: FanZoneRunningOrderProps) {
