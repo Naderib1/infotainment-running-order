@@ -25,10 +25,65 @@ const typeToIndex: Record<FanZoneItem['type'], number> = {
 }
 
 // Parse time string to minutes for sorting
+// Supports formats: -01:30:00, +00:15:00, T-120, T-60, KO, HT, FT, etc.
 const parseTime = (timeStr: string): number => {
   if (!timeStr) return 9999
-  const [hours, minutes] = timeStr.split(':').map(Number)
-  return (hours || 0) * 60 + (minutes || 0)
+  const s = timeStr.trim().toUpperCase()
+  
+  // Handle -HH:MM:SS or +HH:MM:SS format (e.g., -01:30:00, +00:15:00)
+  const hhmmssMatch = s.match(/^([+-])?(\d{1,2}):(\d{2}):(\d{2})$/)
+  if (hhmmssMatch) {
+    const sign = hhmmssMatch[1] === '-' ? -1 : 1
+    const hours = parseInt(hhmmssMatch[2], 10)
+    const minutes = parseInt(hhmmssMatch[3], 10)
+    return sign * (hours * 60 + minutes)
+  }
+  
+  // Handle -HH:MM or +HH:MM format (e.g., -01:30, +00:15)
+  const hhmmMatch = s.match(/^([+-])?(\d{1,2}):(\d{2})$/)
+  if (hhmmMatch) {
+    const sign = hhmmMatch[1] === '-' ? -1 : 1
+    const hours = parseInt(hhmmMatch[2], 10)
+    const minutes = parseInt(hhmmMatch[3], 10)
+    return sign * (hours * 60 + minutes)
+  }
+  
+  // Handle T-XXX format (e.g., T-120 = 120 minutes before KO)
+  const tMinusMatch = s.match(/^T-(\d+)/)
+  if (tMinusMatch) {
+    return -parseInt(tMinusMatch[1], 10)
+  }
+  
+  // Handle T+XXX format (e.g., T+10 = 10 minutes after KO)
+  const tPlusMatch = s.match(/^T\+(\d+)/)
+  if (tPlusMatch) {
+    return parseInt(tPlusMatch[1], 10)
+  }
+  
+  // Handle special markers
+  if (s.includes('KO') && !s.includes('HT') && !s.includes('FT')) return 0
+  if (s.includes('HT START') || s === 'HT START') return 45
+  if (s.includes('HT WINDOW') || s === 'HT WINDOW') return 50
+  if (s.includes('HT END') || s === 'HT END') return 55
+  if (s.includes('2H') || s.includes('SECOND HALF')) return 60
+  if (s.includes('FT')) return 90
+  if (s.includes('INTER-MATCH')) return 100
+  if (s.includes('AFTER FINAL')) return 110
+  if (s.includes('CLOSE') || s.includes('CLOSURE')) return 120
+  
+  // Handle +XX format (e.g., +45 = 45 minutes after FT)
+  const plusMatch = s.match(/^\+(\d+)/)
+  if (plusMatch) {
+    return 90 + parseInt(plusMatch[1], 10)
+  }
+  
+  // Fallback: try to parse as HH:MM
+  const parts = s.split(':').map(Number)
+  if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+    return parts[0] * 60 + parts[1]
+  }
+  
+  return 9999
 }
 
 export function FanZoneRunningOrder({ schedule = defaultFanZoneSchedule, onBack }: FanZoneRunningOrderProps) {

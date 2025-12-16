@@ -57,7 +57,7 @@ export function FanZoneEditor({ schedule, onSave, saving }: FanZoneEditorProps) 
     const newItem: FanZoneItem = {
       id: generateId(),
       type: 'music',
-      time: 'T-00',
+      time: '-00:00:00',
       title: 'New Item',
       screens: {
         screen1: '',

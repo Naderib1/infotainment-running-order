@@ -78,7 +78,7 @@ export const defaultFanZoneSchedule: FanZoneSchedule = {
     {
       id: 'fz-1',
       type: 'opening',
-      time: 'T-120',
+      time: '-02:00:00',
       title: 'Fan Zone Opens',
       screens: {
         screen1: 'Gates open, security & vendors operational',
@@ -89,7 +89,7 @@ export const defaultFanZoneSchedule: FanZoneSchedule = {
     {
       id: 'fz-2',
       type: 'opening',
-      time: 'T-105',
+      time: '-01:45:00',
       title: 'Welcome Messages',
       screens: {
         screen1: 'Crowd entry management',
@@ -100,7 +100,7 @@ export const defaultFanZoneSchedule: FanZoneSchedule = {
     {
       id: 'fz-3',
       type: 'music',
-      time: 'T-90',
+      time: '-01:30:00',
       title: 'Atmosphere Build',
       screens: {
         screen1: 'Activations & photo zones open',
@@ -111,7 +111,7 @@ export const defaultFanZoneSchedule: FanZoneSchedule = {
     {
       id: 'fz-4',
       type: 'music',
-      time: 'T-75',
+      time: '-01:15:00',
       title: 'Pre-Match Loop',
       screens: {
         screen1: 'Free fan movement',
@@ -122,7 +122,7 @@ export const defaultFanZoneSchedule: FanZoneSchedule = {
     {
       id: 'fz-5',
       type: 'match',
-      time: 'T-60',
+      time: '-01:00:00',
       title: 'Match Card',
       screens: {
         screen1: 'Attention shifts to main screen',
@@ -133,7 +133,7 @@ export const defaultFanZoneSchedule: FanZoneSchedule = {
     {
       id: 'fz-6',
       type: 'match',
-      time: 'T-45',
+      time: '-00:45:00',
       title: 'Team Focus',
       screens: {
         screen1: 'Fans gather near screen',
@@ -144,7 +144,7 @@ export const defaultFanZoneSchedule: FanZoneSchedule = {
     {
       id: 'fz-7',
       type: 'match',
-      time: 'T-30',
+      time: '-00:30:00',
       title: 'Countdown Phase',
       screens: {
         screen1: 'Reduce roaming, screen priority',
@@ -155,7 +155,7 @@ export const defaultFanZoneSchedule: FanZoneSchedule = {
     {
       id: 'fz-8',
       type: 'match',
-      time: 'T-15',
+      time: '-00:15:00',
       title: 'Final Build-Up',
       screens: {
         screen1: 'Stage clear, crowd focus',
@@ -166,7 +166,7 @@ export const defaultFanZoneSchedule: FanZoneSchedule = {
     {
       id: 'fz-9',
       type: 'match',
-      time: 'T-5',
+      time: '-00:05:00',
       title: 'Pre-Kick-Off Hold',
       screens: {
         screen1: 'Full screen priority',
@@ -177,7 +177,7 @@ export const defaultFanZoneSchedule: FanZoneSchedule = {
     {
       id: 'fz-10',
       type: 'match',
-      time: 'KO → HT',
+      time: '00:00:00',
       title: 'Match – First Half',
       screens: {
         screen1: 'Crowd viewing, no interruptions',
@@ -188,7 +188,7 @@ export const defaultFanZoneSchedule: FanZoneSchedule = {
     {
       id: 'fz-11',
       type: 'entertainment',
-      time: 'HT Start',
+      time: '+00:45:00',
       title: 'Halftime Transition',
       screens: {
         screen1: 'Stage reset',
@@ -199,7 +199,7 @@ export const defaultFanZoneSchedule: FanZoneSchedule = {
     {
       id: 'fz-12',
       type: 'entertainment',
-      time: 'HT Window',
+      time: '+00:50:00',
       title: 'Halftime Entertainment',
       screens: {
         screen1: 'On-ground show (flexible timing)',
@@ -210,7 +210,7 @@ export const defaultFanZoneSchedule: FanZoneSchedule = {
     {
       id: 'fz-13',
       type: 'entertainment',
-      time: 'HT End',
+      time: '+00:55:00',
       title: 'Back to Match',
       screens: {
         screen1: 'Clear stage immediately',
@@ -221,7 +221,7 @@ export const defaultFanZoneSchedule: FanZoneSchedule = {
     {
       id: 'fz-14',
       type: 'match',
-      time: '2H → FT',
+      time: '+01:00:00',
       title: 'Match – Second Half',
       screens: {
         screen1: 'Crowd viewing',
@@ -232,7 +232,7 @@ export const defaultFanZoneSchedule: FanZoneSchedule = {
     {
       id: 'fz-15',
       type: 'music',
-      time: 'FT → +10',
+      time: '+01:45:00',
       title: 'Post-Match Reaction',
       screens: {
         screen1: 'Celebration moment',
@@ -243,7 +243,7 @@ export const defaultFanZoneSchedule: FanZoneSchedule = {
     {
       id: 'fz-16',
       type: 'music',
-      time: '+10 → +25',
+      time: '+01:55:00',
       title: 'Match Wrap',
       screens: {
         screen1: 'Crowd circulation',
@@ -254,7 +254,7 @@ export const defaultFanZoneSchedule: FanZoneSchedule = {
     {
       id: 'fz-17',
       type: 'music',
-      time: '+25 → +30',
+      time: '+02:10:00',
       title: 'Reset Phase',
       screens: {
         screen1: 'Cleaning & technical checks',
@@ -265,7 +265,7 @@ export const defaultFanZoneSchedule: FanZoneSchedule = {
     {
       id: 'fz-18',
       type: 'music',
-      time: 'Inter-Match',
+      time: '+02:15:00',
       title: 'Fan Zone Loop',
       screens: {
         screen1: 'Engagement & rest period',
@@ -276,7 +276,7 @@ export const defaultFanZoneSchedule: FanZoneSchedule = {
     {
       id: 'fz-19',
       type: 'match',
-      time: 'T-30 (Next)',
+      time: '+02:30:00',
       title: 'Next Match Build-Up',
       screens: {
         screen1: 'Repeat full pre-match cycle',
@@ -287,7 +287,7 @@ export const defaultFanZoneSchedule: FanZoneSchedule = {
     {
       id: 'fz-20',
       type: 'closing',
-      time: 'After Final',
+      time: '+03:00:00',
       title: 'Cool Down',
       screens: {
         screen1: 'Gradual crowd exit',
@@ -298,7 +298,7 @@ export const defaultFanZoneSchedule: FanZoneSchedule = {
     {
       id: 'fz-21',
       type: 'closing',
-      time: '+45',
+      time: '+03:45:00',
       title: 'Closing Announcements',
       screens: {
         screen1: 'Guided exits',
@@ -309,7 +309,7 @@ export const defaultFanZoneSchedule: FanZoneSchedule = {
     {
       id: 'fz-22',
       type: 'closing',
-      time: 'Close',
+      time: '+04:00:00',
       title: 'Closure',
       screens: {
         screen1: 'Full shutdown',
