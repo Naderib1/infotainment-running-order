@@ -578,6 +578,6 @@ export const defaultTeams: Team[] = [
   // Group F
   { id: 'cameroon',      name1: 'Cameroon',                   name2: 'الكاميرون' },
   { id: 'gabon',         name1: 'Gabon',                      name2: 'الجابون' },
-  { id: 'ivory-coast',   name1: 'Ivory Coast',                name2: 'كوت ديفوار' },
+  { id: 'ivory-coast',   name1: "Cote d'Ivoire",              name2: 'كوت ديفوار' },
   { id: 'mozambique',    name1: 'Mozambique',                 name2: 'موزمبيق' }
 ]

@@ -58,7 +58,7 @@ const initialAppData: AppData = {
   categories: defaultCategories,
   selectedVenue: '',
   matchConfig: initialMatchConfig,
-  dataVersion: 2
+  dataVersion: 3
 }
 
 // Public user flow: Platform Selection → (Matches flow OR Fan Zones flow)

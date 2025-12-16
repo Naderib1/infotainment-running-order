@@ -311,9 +311,9 @@ export function ensureAppDataShape(raw: any): AppData {
   const matchConfig = ensureMatchConfig(value.matchConfig)
 
   // Versioned migration:
-  // v1 → v2 : snap stadiums & teams to AFCON 2025 canonical data once,
-  //           then mark dataVersion = 2 so we do not overwrite user edits later.
-  if (previousVersion < 2) {
+  // v1 → v2 : snap stadiums & teams to AFCON 2025 canonical data once
+  // v2 → v3 : refresh teams to fix Cote d'Ivoire naming
+  if (previousVersion < 3) {
     competition.stadiums = defaultStadiums
     competition.teams = defaultTeams
   }
@@ -324,6 +324,6 @@ export function ensureAppDataShape(raw: any): AppData {
     categories,
     selectedVenue,
     matchConfig,
-    dataVersion: 2
+    dataVersion: 3
   }
 }
