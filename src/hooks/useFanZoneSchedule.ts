@@ -43,7 +43,9 @@ export function useFanZoneSchedule() {
   const saveSchedule = useCallback(async (newSchedule: FanZoneSchedule, userEmail?: string): Promise<boolean> => {
     setSaving(true)
     try {
-      const { error } = await supabase
+      console.log('Saving fan zone schedule...', { itemCount: newSchedule.items.length, userEmail })
+      
+      const { data, error } = await supabase
         .from('fan_zone_schedule')
         .upsert({
           id: 'main',
@@ -51,16 +53,20 @@ export function useFanZoneSchedule() {
           updated_at: new Date().toISOString(),
           updated_by: userEmail || 'unknown'
         })
+        .select()
 
       if (error) {
         console.error('Error saving fan zone schedule:', error)
+        alert(`Failed to save: ${error.message}`)
         return false
       }
 
+      console.log('Fan zone schedule saved successfully:', data)
       setSchedule(newSchedule)
       return true
     } catch (err) {
       console.error('Error saving fan zone schedule:', err)
+      alert(`Failed to save: ${err instanceof Error ? err.message : 'Unknown error'}`)
       return false
     } finally {
       setSaving(false)
