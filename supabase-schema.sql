@@ -48,4 +48,36 @@ CREATE TRIGGER update_user_data_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+-- =====================================================
+-- Fan Zone Schedule Table
+-- =====================================================
 
+-- Create the fan_zone_schedule table to store fan zone running order
+CREATE TABLE IF NOT EXISTS fan_zone_schedule (
+  id TEXT PRIMARY KEY DEFAULT 'main',
+  data JSONB NOT NULL DEFAULT '{}',
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_by TEXT
+);
+
+-- Enable Row Level Security (RLS)
+ALTER TABLE fan_zone_schedule ENABLE ROW LEVEL SECURITY;
+
+-- Create policy: Anyone can read the fan zone schedule
+CREATE POLICY "Anyone can view fan zone schedule" ON fan_zone_schedule
+  FOR SELECT USING (true);
+
+-- Create policy: Only authenticated users can insert (admins will be checked in app)
+CREATE POLICY "Authenticated users can insert fan zone schedule" ON fan_zone_schedule
+  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+
+-- Create policy: Only authenticated users can update (admins will be checked in app)
+CREATE POLICY "Authenticated users can update fan zone schedule" ON fan_zone_schedule
+  FOR UPDATE USING (auth.role() = 'authenticated');
+
+-- Trigger to automatically update updated_at on row update
+DROP TRIGGER IF EXISTS update_fan_zone_schedule_updated_at ON fan_zone_schedule;
+CREATE TRIGGER update_fan_zone_schedule_updated_at
+  BEFORE UPDATE ON fan_zone_schedule
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();

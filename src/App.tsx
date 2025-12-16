@@ -6,11 +6,15 @@ import { GameExtrasEditor } from './components/GameExtrasEditor'
 import { CompactGameSchedule } from './components/CompactGameSchedule'
 import { GameInfoPage } from './components/GameInfoPage'
 import { Auth } from './components/Auth'
+import { PlatformSelector } from './components/PlatformSelector'
+import { FanZoneRunningOrder } from './components/FanZoneRunningOrder'
+import { FanZoneEditor } from './components/FanZoneEditor'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { useSupabaseData } from './hooks/useSupabaseData'
 import { useAdmin } from './hooks/useAdmin'
 import { useDefaultTemplate } from './hooks/useDefaultTemplate'
 import { useGameExtras } from './hooks/useGameExtras'
+import { useFanZoneSchedule } from './hooks/useFanZoneSchedule'
 import { Competition, RunningOrderItem, AppData, MatchConfig } from './types'
 import { defaultCategories, defaultRunningOrder, defaultStadiums, defaultTeams } from './data/defaultCategories'
 import { ensureAppDataShape } from './lib/ensureShape'
@@ -57,11 +61,13 @@ const initialAppData: AppData = {
   dataVersion: 2
 }
 
-// Public user flow: Compact Schedule → Game Info → Running Order
+// Public user flow: Platform Selection → (Matches flow OR Fan Zones flow)
 function PublicUserFlow({ template }: { template: AppData }) {
+  const [selectedPlatform, setSelectedPlatform] = useState<'matches' | 'fanzones' | null>(null)
   const [selectedGame, setSelectedGame] = useState<Game | null>(null)
   const [showRunningOrder, setShowRunningOrder] = useState(false)
   const { getGameExtras } = useGameExtras()
+  const { schedule: fanZoneSchedule } = useFanZoneSchedule()
   
   // When a game is selected, update the template with game info
   const getTemplateWithGameInfo = (): AppData => {
@@ -111,10 +117,47 @@ function PublicUserFlow({ template }: { template: AppData }) {
     return template.runningOrder.filter(item => !extras.deactivated_items.includes(item.id))
   }
   
-  // Step 1: Show compact schedule
+  // Step 0: Show platform selector
+  if (!selectedPlatform) {
+    return (
+      <div className="min-h-screen">
+        <div className="fixed bottom-4 right-4 z-50 print:hidden">
+          <Auth mode="link" />
+        </div>
+        <PlatformSelector onSelectPlatform={setSelectedPlatform} />
+      </div>
+    )
+  }
+
+  // Fan Zones flow: Show fan zone running order guide
+  if (selectedPlatform === 'fanzones') {
+    return (
+      <div className="min-h-screen">
+        <div className="fixed bottom-4 right-4 z-50 print:hidden">
+          <Auth mode="link" />
+        </div>
+        <FanZoneRunningOrder 
+          schedule={fanZoneSchedule || undefined} 
+          onBack={() => setSelectedPlatform(null)} 
+        />
+      </div>
+    )
+  }
+
+  // Matches flow - Step 1: Show compact schedule
   if (!selectedGame) {
     return (
       <div className="min-h-screen">
+        <div className="fixed top-4 left-4 z-50 print:hidden">
+          <Button
+            variant="outline"
+            onClick={() => setSelectedPlatform(null)}
+            className="flex items-center gap-2 bg-white/80 backdrop-blur shadow-lg"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Back to Platform
+          </Button>
+        </div>
         <div className="fixed bottom-4 right-4 z-50 print:hidden">
           <Auth mode="link" />
         </div>
@@ -196,10 +239,12 @@ function AppContent() {
   const { isAdmin, loading: adminLoading } = useAdmin()
   const { template, loading: templateLoading, saving: publishingSaving, saveTemplate } = useDefaultTemplate()
   const { extras: gameExtras, saving: savingExtras, saveGameExtras, getGameExtras } = useGameExtras()
+  const { schedule: fanZoneSchedule, saving: fanZoneSaving, saveSchedule: saveFanZoneSchedule } = useFanZoneSchedule()
   
   // Admin game management state
   const [adminSelectedGame, setAdminSelectedGame] = useState<Game | null>(null)
   const [showGameManager, setShowGameManager] = useState(false)
+  const [showFanZoneEditor, setShowFanZoneEditor] = useState(false)
   
   const [currentStep, setCurrentStep] = useState(() => {
     if (typeof window === 'undefined') return 1
@@ -437,10 +482,10 @@ function AppContent() {
         <div className="flex items-center bg-white/80 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70 rounded-full shadow-lg backdrop-blur px-1 py-1">
           <button
             type="button"
-            onClick={() => { setCurrentStep(1); setShowGameManager(false) }}
+            onClick={() => { setCurrentStep(1); setShowGameManager(false); setShowFanZoneEditor(false) }}
             className={[
               'px-4 py-1.5 text-sm rounded-full transition',
-              currentStep === 1 && !showGameManager
+              currentStep === 1 && !showGameManager && !showFanZoneEditor
                 ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow'
                 : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/60'
             ].join(' ')}
@@ -449,10 +494,10 @@ function AppContent() {
           </button>
           <button
             type="button"
-            onClick={() => { setCurrentStep(2); setShowGameManager(false) }}
+            onClick={() => { setCurrentStep(2); setShowGameManager(false); setShowFanZoneEditor(false) }}
             className={[
               'px-4 py-1.5 text-sm rounded-full transition',
-              currentStep === 2 && !showGameManager
+              currentStep === 2 && !showGameManager && !showFanZoneEditor
                 ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow'
                 : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/60'
             ].join(' ')}
@@ -460,18 +505,32 @@ function AppContent() {
             Running Order
           </button>
           {isAdmin && (
-            <button
-              type="button"
-              onClick={() => { setShowGameManager(true); setAdminSelectedGame(null) }}
-              className={[
-                'px-4 py-1.5 text-sm rounded-full transition',
-                showGameManager
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow'
-                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/60'
-              ].join(' ')}
-            >
-              Manage Games
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => { setShowGameManager(true); setShowFanZoneEditor(false); setAdminSelectedGame(null) }}
+                className={[
+                  'px-4 py-1.5 text-sm rounded-full transition',
+                  showGameManager
+                    ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/60'
+                ].join(' ')}
+              >
+                Manage Games
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShowFanZoneEditor(true); setShowGameManager(false) }}
+                className={[
+                  'px-4 py-1.5 text-sm rounded-full transition',
+                  showFanZoneEditor
+                    ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/60'
+                ].join(' ')}
+              >
+                Fan Zones
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -517,7 +576,22 @@ function AppContent() {
         </div>
       )}
 
-      {!showGameManager && currentStep === 1 && (
+      {/* Admin Fan Zone Editor */}
+      {showFanZoneEditor && isAdmin && fanZoneSchedule && (
+        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 p-4 pt-20">
+          <div className="max-w-4xl mx-auto">
+            <FanZoneEditor
+              schedule={fanZoneSchedule}
+              onSave={async (schedule) => {
+                return await saveFanZoneSchedule(schedule, user?.email || undefined)
+              }}
+              saving={fanZoneSaving}
+            />
+          </div>
+        </div>
+      )}
+
+      {!showGameManager && !showFanZoneEditor && currentStep === 1 && (
         <CompetitionSetup
           competition={appData.competition}
           onCompetitionChange={handleCompetitionChange}
@@ -525,7 +599,7 @@ function AppContent() {
         />
       )}
 
-      {!showGameManager && currentStep === 2 && (
+      {!showGameManager && !showFanZoneEditor && currentStep === 2 && (
         <RunningOrderTemplate
           competition={appData.competition}
           runningOrder={appData.runningOrder}
