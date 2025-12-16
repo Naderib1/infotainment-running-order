@@ -16,13 +16,28 @@ interface FanZoneEditorProps {
   saving: boolean
 }
 
-// Map fan zone types to category indices for consistent palette
-const typeToIndex: Record<FanZoneItem['type'], number> = {
-  opening: 0,
-  music: 1,
-  match: 2,
-  entertainment: 3,
-  closing: 4
+// Get color index based on time category
+const getTimeColorIndex = (timeStr: string): number => {
+  if (!timeStr) return 0
+  const s = timeStr.trim().toUpperCase()
+  
+  // FT items - purple/closing color
+  if (s.startsWith('FT')) return 4
+  
+  // HT items - orange/entertainment color
+  if (s.startsWith('HT')) return 3
+  
+  // Positive times (after kick-off) - green/match color
+  if (s.startsWith('+') || s.startsWith('T+')) return 2
+  
+  // Negative times (before kick-off) - blue/music color
+  if (s.startsWith('-') || s.startsWith('T-')) return 1
+  
+  // KO - red/opening color
+  if (s === 'KO' || s.includes('KICK')) return 0
+  
+  // Default
+  return 0
 }
 
 // Parse time string to minutes for sorting
@@ -272,7 +287,7 @@ export function FanZoneEditor({ schedule, onSave, saving }: FanZoneEditorProps) 
       {/* Items List - Card Style like Games (sorted by time) */}
       <div className="space-y-4">
         {sortedItems.map((item) => {
-          const idx = typeToIndex[item.type]
+          const idx = getTimeColorIndex(item.time)
           const palette = getCategoryPaletteEntry(idx)
           const isEditing = editingId === item.id
           
