@@ -24,11 +24,11 @@ const CITIES = [
   { id: 'none', name: 'No Appearance', color: 'from-slate-400 to-slate-500' },
 ]
 
-// Generate dates from Dec 20, 2025 to Jan 20, 2026
+// Generate dates from Dec 20, 2025 to Jan 18, 2026 (Final day)
 const generateDates = (): Date[] => {
   const dates: Date[] = []
   const startDate = new Date(2025, 11, 20) // Dec 20, 2025
-  const endDate = new Date(2026, 0, 20) // Jan 20, 2026
+  const endDate = new Date(2026, 0, 18) // Jan 18, 2026 (Final)
   
   const currentDate = new Date(startDate)
   while (currentDate <= endDate) {
