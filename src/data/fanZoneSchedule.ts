@@ -319,3 +319,121 @@ export const defaultFanZoneSchedule: FanZoneSchedule = {
     }
   ]
 }
+
+// Default non-matchday schedule template
+export const defaultNonMatchdaySchedule: FanZoneSchedule = {
+  id: 'default-nonmatchday',
+  name: 'Fan Zone Non-Matchday Schedule',
+  items: [
+    {
+      id: 'nm-1',
+      type: 'opening',
+      time: '-02:00:00',
+      title: 'Fan Zone Opening',
+      screens: {
+        screen1: 'Welcome setup',
+        screen2: 'AFCON branding loop',
+        screen3: 'Background music'
+      }
+    },
+    {
+      id: 'nm-2',
+      type: 'music',
+      time: '-01:45:00',
+      title: 'DJ Set Start',
+      screens: {
+        screen1: 'DJ booth active',
+        screen2: 'Music visuals',
+        screen3: 'DJ mix'
+      }
+    },
+    {
+      id: 'nm-3',
+      type: 'entertainment',
+      time: '-01:30:00',
+      title: 'Interactive Games',
+      screens: {
+        screen1: 'Game stations open',
+        screen2: 'Game instructions',
+        screen3: 'MC announcements'
+      }
+    },
+    {
+      id: 'nm-4',
+      type: 'entertainment',
+      time: '-01:00:00',
+      title: 'Cultural Performance',
+      screens: {
+        screen1: 'Stage performance',
+        screen2: 'Artist info slides',
+        screen3: 'Live audio'
+      }
+    },
+    {
+      id: 'nm-5',
+      type: 'music',
+      time: '-00:30:00',
+      title: 'DJ Session',
+      screens: {
+        screen1: 'DJ booth',
+        screen2: 'Music visuals',
+        screen3: 'DJ mix'
+      }
+    },
+    {
+      id: 'nm-6',
+      type: 'entertainment',
+      time: '+00:00:00',
+      title: 'Main Entertainment',
+      screens: {
+        screen1: 'Main stage show',
+        screen2: 'Show graphics',
+        screen3: 'Live audio'
+      }
+    },
+    {
+      id: 'nm-7',
+      type: 'entertainment',
+      time: '+00:45:00',
+      title: 'Fan Activities',
+      screens: {
+        screen1: 'Fan engagement zone',
+        screen2: 'Activity info',
+        screen3: 'MC hosting'
+      }
+    },
+    {
+      id: 'nm-8',
+      type: 'music',
+      time: '+01:30:00',
+      title: 'Afternoon DJ Set',
+      screens: {
+        screen1: 'DJ performance',
+        screen2: 'Music visuals',
+        screen3: 'DJ mix'
+      }
+    },
+    {
+      id: 'nm-9',
+      type: 'closing',
+      time: '+02:00:00',
+      title: 'Closing Announcements',
+      screens: {
+        screen1: 'Guided exits',
+        screen2: 'Info slides',
+        screen3: 'MC announcements'
+      }
+    },
+    {
+      id: 'nm-10',
+      type: 'closing',
+      time: '+02:30:00',
+      title: 'Fan Zone Closure',
+      screens: {
+        screen1: 'Full shutdown',
+        screen2: 'AFCON closing loop',
+        screen3: 'Audio off'
+      }
+    }
+  ]
+}

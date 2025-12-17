@@ -7,8 +7,8 @@ import { CompactGameSchedule } from './components/CompactGameSchedule'
 import { GameInfoPage } from './components/GameInfoPage'
 import { Auth } from './components/Auth'
 import { PlatformSelector } from './components/PlatformSelector'
-import { FanZoneRunningOrder } from './components/FanZoneRunningOrder'
 import { FanZoneEditor } from './components/FanZoneEditor'
+import { FanZoneHub } from './components/FanZoneHub'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { useSupabaseData } from './hooks/useSupabaseData'
 import { useAdmin } from './hooks/useAdmin'
@@ -160,15 +160,15 @@ function PublicUserFlow({ template }: { template: AppData }) {
     )
   }
 
-  // Fan Zones flow: Show fan zone running order guide
+  // Fan Zones flow: Show fan zone hub with sub-menu
   if (selectedPlatform === 'fanzones') {
     return (
       <div className="min-h-screen">
         <div className="fixed bottom-4 right-4 z-50 print:hidden">
           <Auth mode="link" />
         </div>
-        <FanZoneRunningOrder 
-          schedule={fanZoneSchedule || undefined} 
+        <FanZoneHub 
+          matchdaySchedule={fanZoneSchedule || undefined} 
           onBack={() => setSelectedPlatform(null)} 
         />
       </div>
