@@ -6,10 +6,10 @@ import { FanZoneSchedule } from '../data/fanZoneSchedule'
 import { FanZoneRunningOrder } from './FanZoneRunningOrder'
 import { FanZoneNonMatchdays } from './FanZoneNonMatchdays'
 import { MascotSchedule } from './MascotSchedule'
+import { useNonMatchdaySchedule } from '../hooks/useNonMatchdaySchedule'
 
 interface FanZoneHubProps {
   matchdaySchedule?: FanZoneSchedule
-  nonMatchdaySchedule?: FanZoneSchedule
   onBack: () => void
   isAdmin?: boolean
   userEmail?: string
@@ -17,7 +17,8 @@ interface FanZoneHubProps {
 
 type FanZoneView = 'hub' | 'matchdays' | 'non-matchdays' | 'mascot'
 
-export function FanZoneHub({ matchdaySchedule, nonMatchdaySchedule, onBack, isAdmin = false, userEmail }: FanZoneHubProps) {
+export function FanZoneHub({ matchdaySchedule, onBack, isAdmin = false, userEmail }: FanZoneHubProps) {
+  const { schedule: nonMatchdaySchedule } = useNonMatchdaySchedule()
   const [currentView, setCurrentView] = useState<FanZoneView>('hub')
 
   // Sub-views
@@ -33,7 +34,7 @@ export function FanZoneHub({ matchdaySchedule, nonMatchdaySchedule, onBack, isAd
   if (currentView === 'non-matchdays') {
     return (
       <FanZoneNonMatchdays 
-        schedule={nonMatchdaySchedule} 
+        schedule={nonMatchdaySchedule || undefined} 
         onBack={() => setCurrentView('hub')} 
       />
     )
