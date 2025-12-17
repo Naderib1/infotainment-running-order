@@ -13,14 +13,15 @@ interface MascotScheduleProps {
 
 // Cities for mascot appearances
 const CITIES = [
-  { id: 'rabat1', name: 'Rabat 1', color: 'from-red-500 to-rose-500' },
-  { id: 'rabat2', name: 'Rabat 2', color: 'from-red-400 to-rose-400' },
-  { id: 'casablanca1', name: 'Casablanca 1', color: 'from-blue-500 to-indigo-500' },
-  { id: 'casablanca2', name: 'Casablanca 2', color: 'from-blue-400 to-indigo-400' },
+  { id: 'rabat1', name: 'Rabat 1 (OLM)', color: 'from-red-500 to-rose-500' },
+  { id: 'rabat2', name: 'Rabat 2 (Salé)', color: 'from-red-400 to-rose-400' },
+  { id: 'casablanca1', name: 'Casablanca 1 (Anfa Park)', color: 'from-blue-500 to-indigo-500' },
+  { id: 'casablanca2', name: 'Casablanca 2 (Espace Toro)', color: 'from-blue-400 to-indigo-400' },
   { id: 'marrakech', name: 'Marrakech', color: 'from-orange-500 to-amber-500' },
   { id: 'tangier', name: 'Tangier', color: 'from-teal-500 to-cyan-500' },
   { id: 'fez', name: 'Fez', color: 'from-purple-500 to-violet-500' },
   { id: 'agadir', name: 'Agadir', color: 'from-green-500 to-emerald-500' },
+  { id: 'none', name: 'No Appearance', color: 'from-slate-400 to-slate-500' },
 ]
 
 // Generate dates from Dec 20, 2024 to Jan 20, 2025
