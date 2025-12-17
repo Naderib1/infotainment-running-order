@@ -64,11 +64,19 @@ export function MascotSchedule({ onBack, isAdmin = false, userEmail }: MascotSch
     }
   }, [savedData])
 
+  // Helper to get date key in YYYY-MM-DD format (local time)
+  const getDateKey = (date: Date): string => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+
   // Add or remove entry for current date (admin only)
   const toggleCity = (cityId: string) => {
     if (!selectedDate || !isAdmin) return
     
-    const dateKey = selectedDate.toISOString().split('T')[0]
+    const dateKey = getDateKey(selectedDate)
     const currentEntries = scheduleData[dateKey] || []
     const existingIndex = currentEntries.findIndex(e => e.cityId === cityId)
     
@@ -89,7 +97,7 @@ export function MascotSchedule({ onBack, isAdmin = false, userEmail }: MascotSch
   // Update entry time
   const updateEntryTime = (cityId: string, time: string) => {
     if (!selectedDate || !isAdmin) return
-    const dateKey = selectedDate.toISOString().split('T')[0]
+    const dateKey = getDateKey(selectedDate)
     const currentEntries = scheduleData[dateKey] || []
     setScheduleData({
       ...scheduleData,
@@ -101,7 +109,7 @@ export function MascotSchedule({ onBack, isAdmin = false, userEmail }: MascotSch
   // Update entry note
   const updateEntryNote = (cityId: string, note: string) => {
     if (!selectedDate || !isAdmin) return
-    const dateKey = selectedDate.toISOString().split('T')[0]
+    const dateKey = getDateKey(selectedDate)
     const currentEntries = scheduleData[dateKey] || []
     setScheduleData({
       ...scheduleData,
@@ -119,9 +127,9 @@ export function MascotSchedule({ onBack, isAdmin = false, userEmail }: MascotSch
     }
   }
 
-  // Get entries for a specific date
+  // Get entries for a specific date (use local date to avoid timezone issues)
   const getEntriesForDate = (date: Date): MascotEntry[] => {
-    const dateKey = date.toISOString().split('T')[0]
+    const dateKey = getDateKey(date)
     return scheduleData[dateKey] || []
   }
 
