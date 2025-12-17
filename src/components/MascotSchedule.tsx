@@ -1,11 +1,14 @@
-import { useState, useMemo } from 'react'
-import { ChevronLeft, Calendar, MapPin, Check, FileText, Download } from 'lucide-react'
+import { useState, useMemo, useEffect } from 'react'
+import { ChevronLeft, Calendar, MapPin, Check, FileText, Download, Save } from 'lucide-react'
 import { Button } from './ui/button'
 import { Card, CardContent } from './ui/card'
 import { downloadFile } from '../lib/utils'
+import { useMascotSchedule } from '../hooks/useMascotSchedule'
 
 interface MascotScheduleProps {
   onBack: () => void
+  isAdmin?: boolean
+  userEmail?: string
 }
 
 // Cities for mascot appearances
@@ -55,13 +58,22 @@ const formatDateFull = (date: Date): string => {
   })
 }
 
-export function MascotSchedule({ onBack }: MascotScheduleProps) {
+export function MascotSchedule({ onBack, isAdmin = false, userEmail }: MascotScheduleProps) {
+  const { data: savedData, loading, saving, saveSchedule } = useMascotSchedule()
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [scheduleData, setScheduleData] = useState<Record<string, string[]>>({})
+  const [hasChanges, setHasChanges] = useState(false)
 
-  // Toggle city selection for current date
+  // Load saved data when it arrives
+  useEffect(() => {
+    if (savedData?.schedule) {
+      setScheduleData(savedData.schedule)
+    }
+  }, [savedData])
+
+  // Toggle city selection for current date (admin only)
   const toggleCity = (cityId: string) => {
-    if (!selectedDate) return
+    if (!selectedDate || !isAdmin) return
     
     const dateKey = selectedDate.toISOString().split('T')[0]
     const currentCities = scheduleData[dateKey] || []
@@ -76,6 +88,16 @@ export function MascotSchedule({ onBack }: MascotScheduleProps) {
         ...scheduleData,
         [dateKey]: [...currentCities, cityId]
       })
+    }
+    setHasChanges(true)
+  }
+
+  // Save schedule (admin only)
+  const handleSave = async () => {
+    if (!isAdmin) return
+    const success = await saveSchedule({ schedule: scheduleData }, userEmail)
+    if (success) {
+      setHasChanges(false)
     }
   }
 
@@ -130,15 +152,25 @@ export function MascotSchedule({ onBack }: MascotScheduleProps) {
         </Button>
       </div>
 
-      {/* Export Button */}
-      <div className="fixed top-4 right-4 z-50 print:hidden">
+      {/* Action Buttons */}
+      <div className="fixed top-4 right-4 z-50 print:hidden flex gap-2">
+        {isAdmin && (
+          <Button
+            onClick={handleSave}
+            disabled={saving || !hasChanges}
+            className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg"
+          >
+            <Save className="h-4 w-4" />
+            {saving ? 'Saving...' : hasChanges ? 'Save Changes' : 'Saved'}
+          </Button>
+        )}
         <Button
           variant="outline"
           onClick={handleExport}
           className="flex items-center gap-2 bg-white/80 backdrop-blur shadow-lg"
         >
           <Download className="h-4 w-4" />
-          Export Schedule
+          Export
         </Button>
       </div>
 
@@ -213,7 +245,7 @@ export function MascotSchedule({ onBack }: MascotScheduleProps) {
                 <div className="flex items-center gap-2 mb-4">
                   <MapPin className="h-5 w-5 text-orange-600" />
                   <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
-                    Select Cities
+                    {isAdmin ? 'Select Cities' : 'Cities for Date'}
                   </h2>
                 </div>
 
@@ -226,7 +258,7 @@ export function MascotSchedule({ onBack }: MascotScheduleProps) {
                       {CITIES.map((city) => {
                         const isSelected = getCitiesForDate(selectedDate).includes(city.id)
                         
-                        return (
+                        return isAdmin ? (
                           <button
                             key={city.id}
                             onClick={() => toggleCity(city.id)}
@@ -241,14 +273,28 @@ export function MascotSchedule({ onBack }: MascotScheduleProps) {
                             <span className="font-medium">{city.name}</span>
                             {isSelected && <Check className="h-5 w-5" />}
                           </button>
+                        ) : (
+                          isSelected && (
+                            <div
+                              key={city.id}
+                              className={`w-full p-3 rounded-lg bg-gradient-to-r ${city.color} text-white shadow-md`}
+                            >
+                              <span className="font-medium">{city.name}</span>
+                            </div>
+                          )
                         )
                       })}
+                      {!isAdmin && getCitiesForDate(selectedDate).length === 0 && (
+                        <p className="text-slate-500 dark:text-slate-400 text-center py-4">
+                          No mascot appearances scheduled for this date.
+                        </p>
+                      )}
                     </div>
                   </>
                 ) : (
                   <div className="text-center py-8 text-slate-500 dark:text-slate-400">
                     <Calendar className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p>Select a date to choose cities</p>
+                    <p>Select a date to {isAdmin ? 'choose cities' : 'view schedule'}</p>
                   </div>
                 )}
               </CardContent>
@@ -266,7 +312,11 @@ export function MascotSchedule({ onBack }: MascotScheduleProps) {
               </h2>
             </div>
 
-            {totalAppearances > 0 ? (
+            {loading ? (
+              <div className="text-center py-8 text-slate-500 dark:text-slate-400">
+                <p>Loading schedule...</p>
+              </div>
+            ) : totalAppearances > 0 ? (
               <div className="space-y-3">
                 {DATES.filter(date => getCitiesForDate(date).length > 0).map((date) => {
                   const cities = getCitiesForDate(date)
@@ -301,7 +351,7 @@ export function MascotSchedule({ onBack }: MascotScheduleProps) {
             ) : (
               <div className="text-center py-8 text-slate-500 dark:text-slate-400">
                 <p>No mascot appearances scheduled yet.</p>
-                <p className="text-sm mt-1">Select a date and choose cities to schedule appearances.</p>
+                {isAdmin && <p className="text-sm mt-1">Select a date and choose cities to schedule appearances.</p>}
               </div>
             )}
           </CardContent>

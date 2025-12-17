@@ -11,11 +11,13 @@ interface FanZoneHubProps {
   matchdaySchedule?: FanZoneSchedule
   nonMatchdaySchedule?: FanZoneSchedule
   onBack: () => void
+  isAdmin?: boolean
+  userEmail?: string
 }
 
 type FanZoneView = 'hub' | 'matchdays' | 'non-matchdays' | 'mascot'
 
-export function FanZoneHub({ matchdaySchedule, nonMatchdaySchedule, onBack }: FanZoneHubProps) {
+export function FanZoneHub({ matchdaySchedule, nonMatchdaySchedule, onBack, isAdmin = false, userEmail }: FanZoneHubProps) {
   const [currentView, setCurrentView] = useState<FanZoneView>('hub')
 
   // Sub-views
@@ -39,7 +41,11 @@ export function FanZoneHub({ matchdaySchedule, nonMatchdaySchedule, onBack }: Fa
 
   if (currentView === 'mascot') {
     return (
-      <MascotSchedule onBack={() => setCurrentView('hub')} />
+      <MascotSchedule 
+        onBack={() => setCurrentView('hub')} 
+        isAdmin={isAdmin}
+        userEmail={userEmail}
+      />
     )
   }
 

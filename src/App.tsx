@@ -15,6 +15,7 @@ import { useAdmin } from './hooks/useAdmin'
 import { useDefaultTemplate } from './hooks/useDefaultTemplate'
 import { useGameExtras } from './hooks/useGameExtras'
 import { useFanZoneSchedule } from './hooks/useFanZoneSchedule'
+import { useNonMatchdaySchedule } from './hooks/useNonMatchdaySchedule'
 import { Competition, RunningOrderItem, AppData, MatchConfig } from './types'
 import { defaultCategories, defaultRunningOrder, defaultStadiums, defaultTeams } from './data/defaultCategories'
 import { ensureAppDataShape } from './lib/ensureShape'
@@ -271,11 +272,13 @@ function AppContent() {
   const { template, loading: templateLoading, saving: publishingSaving, saveTemplate } = useDefaultTemplate()
   const { extras: gameExtras, saving: savingExtras, saveGameExtras, getGameExtras } = useGameExtras()
   const { schedule: fanZoneSchedule, saving: fanZoneSaving, saveSchedule: saveFanZoneSchedule } = useFanZoneSchedule()
+  const { schedule: nonMatchdaySchedule, saving: nonMatchdaySaving, saveSchedule: saveNonMatchdaySchedule } = useNonMatchdaySchedule()
   
   // Admin game management state
   const [adminSelectedGame, setAdminSelectedGame] = useState<Game | null>(null)
   const [showGameManager, setShowGameManager] = useState(false)
   const [showFanZoneEditor, setShowFanZoneEditor] = useState(false)
+  const [showNonMatchdayEditor, setShowNonMatchdayEditor] = useState(false)
   
   const [currentStep, setCurrentStep] = useState(() => {
     if (typeof window === 'undefined') return 1
@@ -513,10 +516,10 @@ function AppContent() {
         <div className="flex items-center bg-white/80 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70 rounded-full shadow-lg backdrop-blur px-1 py-1">
           <button
             type="button"
-            onClick={() => { setCurrentStep(1); setShowGameManager(false); setShowFanZoneEditor(false) }}
+            onClick={() => { setCurrentStep(1); setShowGameManager(false); setShowFanZoneEditor(false); setShowNonMatchdayEditor(false) }}
             className={[
               'px-4 py-1.5 text-sm rounded-full transition',
-              currentStep === 1 && !showGameManager && !showFanZoneEditor
+              currentStep === 1 && !showGameManager && !showFanZoneEditor && !showNonMatchdayEditor
                 ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow'
                 : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/60'
             ].join(' ')}
@@ -525,10 +528,10 @@ function AppContent() {
           </button>
           <button
             type="button"
-            onClick={() => { setCurrentStep(2); setShowGameManager(false); setShowFanZoneEditor(false) }}
+            onClick={() => { setCurrentStep(2); setShowGameManager(false); setShowFanZoneEditor(false); setShowNonMatchdayEditor(false) }}
             className={[
               'px-4 py-1.5 text-sm rounded-full transition',
-              currentStep === 2 && !showGameManager && !showFanZoneEditor
+              currentStep === 2 && !showGameManager && !showFanZoneEditor && !showNonMatchdayEditor
                 ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow'
                 : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/60'
             ].join(' ')}
@@ -539,7 +542,7 @@ function AppContent() {
             <>
               <button
                 type="button"
-                onClick={() => { setShowGameManager(true); setShowFanZoneEditor(false); setAdminSelectedGame(null) }}
+                onClick={() => { setShowGameManager(true); setShowFanZoneEditor(false); setShowNonMatchdayEditor(false); setAdminSelectedGame(null) }}
                 className={[
                   'px-4 py-1.5 text-sm rounded-full transition',
                   showGameManager
@@ -551,15 +554,27 @@ function AppContent() {
               </button>
               <button
                 type="button"
-                onClick={() => { setShowFanZoneEditor(true); setShowGameManager(false) }}
+                onClick={() => { setShowFanZoneEditor(true); setShowGameManager(false); setShowNonMatchdayEditor(false) }}
                 className={[
                   'px-4 py-1.5 text-sm rounded-full transition',
-                  showFanZoneEditor
+                  showFanZoneEditor && !showNonMatchdayEditor
                     ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow'
                     : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/60'
                 ].join(' ')}
               >
-                Fan Zones
+                Matchdays
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShowNonMatchdayEditor(true); setShowFanZoneEditor(false); setShowGameManager(false) }}
+                className={[
+                  'px-4 py-1.5 text-sm rounded-full transition',
+                  showNonMatchdayEditor
+                    ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/60'
+                ].join(' ')}
+              >
+                Non-Matchdays
               </button>
             </>
           )}
@@ -607,8 +622,8 @@ function AppContent() {
         </div>
       )}
 
-      {/* Admin Fan Zone Editor */}
-      {showFanZoneEditor && isAdmin && fanZoneSchedule && (
+      {/* Admin Fan Zone Editor (Matchdays) */}
+      {showFanZoneEditor && !showNonMatchdayEditor && isAdmin && fanZoneSchedule && (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 p-4 pt-20">
           <div className="max-w-4xl mx-auto">
             <FanZoneEditor
@@ -622,7 +637,22 @@ function AppContent() {
         </div>
       )}
 
-      {!showGameManager && !showFanZoneEditor && currentStep === 1 && (
+      {/* Admin Non-Matchday Editor */}
+      {showNonMatchdayEditor && isAdmin && nonMatchdaySchedule && (
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900 p-4 pt-20">
+          <div className="max-w-4xl mx-auto">
+            <FanZoneEditor
+              schedule={nonMatchdaySchedule}
+              onSave={async (schedule) => {
+                return await saveNonMatchdaySchedule(schedule, user?.email || undefined)
+              }}
+              saving={nonMatchdaySaving}
+            />
+          </div>
+        </div>
+      )}
+
+      {!showGameManager && !showFanZoneEditor && !showNonMatchdayEditor && currentStep === 1 && (
         <CompetitionSetup
           competition={appData.competition}
           onCompetitionChange={handleCompetitionChange}
@@ -630,7 +660,7 @@ function AppContent() {
         />
       )}
 
-      {!showGameManager && !showFanZoneEditor && currentStep === 2 && (
+      {!showGameManager && !showFanZoneEditor && !showNonMatchdayEditor && currentStep === 2 && (
         <RunningOrderTemplate
           competition={appData.competition}
           runningOrder={appData.runningOrder}
