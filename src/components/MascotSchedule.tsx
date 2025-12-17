@@ -1,9 +1,9 @@
 import { useState, useMemo, useEffect } from 'react'
-import { ChevronLeft, Calendar, MapPin, Check, FileText, Download, Save } from 'lucide-react'
+import { ChevronLeft, Calendar, MapPin, Check, FileText, Download, Save, Clock } from 'lucide-react'
 import { Button } from './ui/button'
 import { Card, CardContent } from './ui/card'
 import { downloadFile } from '../lib/utils'
-import { useMascotSchedule } from '../hooks/useMascotSchedule'
+import { useMascotSchedule, MascotEntry } from '../hooks/useMascotSchedule'
 
 interface MascotScheduleProps {
   onBack: () => void
@@ -41,14 +41,6 @@ const generateDates = (): Date[] => {
 const DATES = generateDates()
 
 // Format date for display
-const formatDate = (date: Date): string => {
-  return date.toLocaleDateString('en-US', { 
-    weekday: 'short',
-    month: 'short', 
-    day: 'numeric' 
-  })
-}
-
 const formatDateFull = (date: Date): string => {
   return date.toLocaleDateString('en-US', { 
     weekday: 'long',
@@ -61,7 +53,7 @@ const formatDateFull = (date: Date): string => {
 export function MascotSchedule({ onBack, isAdmin = false, userEmail }: MascotScheduleProps) {
   const { data: savedData, loading, saving, saveSchedule } = useMascotSchedule()
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-  const [scheduleData, setScheduleData] = useState<Record<string, string[]>>({})
+  const [scheduleData, setScheduleData] = useState<Record<string, MascotEntry[]>>({})
   const [hasChanges, setHasChanges] = useState(false)
 
   // Load saved data when it arrives
@@ -71,24 +63,49 @@ export function MascotSchedule({ onBack, isAdmin = false, userEmail }: MascotSch
     }
   }, [savedData])
 
-  // Toggle city selection for current date (admin only)
+  // Add or remove entry for current date (admin only)
   const toggleCity = (cityId: string) => {
     if (!selectedDate || !isAdmin) return
     
     const dateKey = selectedDate.toISOString().split('T')[0]
-    const currentCities = scheduleData[dateKey] || []
+    const currentEntries = scheduleData[dateKey] || []
+    const existingIndex = currentEntries.findIndex(e => e.cityId === cityId)
     
-    if (currentCities.includes(cityId)) {
+    if (existingIndex >= 0) {
       setScheduleData({
         ...scheduleData,
-        [dateKey]: currentCities.filter(c => c !== cityId)
+        [dateKey]: currentEntries.filter(e => e.cityId !== cityId)
       })
     } else {
       setScheduleData({
         ...scheduleData,
-        [dateKey]: [...currentCities, cityId]
+        [dateKey]: [...currentEntries, { cityId, time: '19:00', note: '' }]
       })
     }
+    setHasChanges(true)
+  }
+
+  // Update entry time
+  const updateEntryTime = (cityId: string, time: string) => {
+    if (!selectedDate || !isAdmin) return
+    const dateKey = selectedDate.toISOString().split('T')[0]
+    const currentEntries = scheduleData[dateKey] || []
+    setScheduleData({
+      ...scheduleData,
+      [dateKey]: currentEntries.map(e => e.cityId === cityId ? { ...e, time } : e)
+    })
+    setHasChanges(true)
+  }
+
+  // Update entry note
+  const updateEntryNote = (cityId: string, note: string) => {
+    if (!selectedDate || !isAdmin) return
+    const dateKey = selectedDate.toISOString().split('T')[0]
+    const currentEntries = scheduleData[dateKey] || []
+    setScheduleData({
+      ...scheduleData,
+      [dateKey]: currentEntries.map(e => e.cityId === cityId ? { ...e, note } : e)
+    })
     setHasChanges(true)
   }
 
@@ -101,8 +118,8 @@ export function MascotSchedule({ onBack, isAdmin = false, userEmail }: MascotSch
     }
   }
 
-  // Get cities for a specific date
-  const getCitiesForDate = (date: Date): string[] => {
+  // Get entries for a specific date
+  const getEntriesForDate = (date: Date): MascotEntry[] => {
     const dateKey = date.toISOString().split('T')[0]
     return scheduleData[dateKey] || []
   }
@@ -116,18 +133,20 @@ export function MascotSchedule({ onBack, isAdmin = false, userEmail }: MascotSch
   const handleExport = () => {
     let content = 'AFCON 2025 - Mascot Schedule\n'
     content += '================================\n\n'
+    content += 'Date | Day | Time | Fan Zone | Note\n'
+    content += '-------------------------------------------\n\n'
     
     DATES.forEach(date => {
-      const cities = getCitiesForDate(date)
-      if (cities.length > 0) {
-        content += `${formatDateFull(date)}:\n`
-        cities.forEach(cityId => {
-          const city = CITIES.find(c => c.id === cityId)
+      const entries = getEntriesForDate(date)
+      if (entries.length > 0) {
+        const dayName = date.toLocaleDateString('en-US', { weekday: 'short' })
+        const dateStr = date.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })
+        entries.forEach(entry => {
+          const city = CITIES.find(c => c.id === entry.cityId)
           if (city) {
-            content += `  - ${city.name}\n`
+            content += `${dateStr} | ${dayName} | ${entry.time} | ${city.name} | ${entry.note}\n`
           }
         })
-        content += '\n'
       }
     })
     
@@ -205,7 +224,7 @@ export function MascotSchedule({ onBack, isAdmin = false, userEmail }: MascotSch
                 <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
                   {DATES.map((date) => {
                     const isSelected = selectedDate?.toDateString() === date.toDateString()
-                    const hasCities = getCitiesForDate(date).length > 0
+                    const hasEntries = getEntriesForDate(date).length > 0
                     
                     return (
                       <button
@@ -215,7 +234,7 @@ export function MascotSchedule({ onBack, isAdmin = false, userEmail }: MascotSch
                           p-2 rounded-lg text-center transition-all
                           ${isSelected 
                             ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg scale-105' 
-                            : hasCities
+                            : hasEntries
                               ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200 hover:bg-orange-200'
                               : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                           }
@@ -227,7 +246,7 @@ export function MascotSchedule({ onBack, isAdmin = false, userEmail }: MascotSch
                         <div className="text-lg font-bold">
                           {date.getDate()}
                         </div>
-                        {hasCities && !isSelected && (
+                        {hasEntries && !isSelected && (
                           <div className="w-2 h-2 bg-orange-500 rounded-full mx-auto mt-1" />
                         )}
                       </button>
@@ -255,39 +274,77 @@ export function MascotSchedule({ onBack, isAdmin = false, userEmail }: MascotSch
                       {formatDateFull(selectedDate)}
                     </p>
                     <div className="space-y-2">
-                      {CITIES.map((city) => {
-                        const isSelected = getCitiesForDate(selectedDate).includes(city.id)
-                        
-                        return isAdmin ? (
-                          <button
-                            key={city.id}
-                            onClick={() => toggleCity(city.id)}
-                            className={`
-                              w-full p-3 rounded-lg text-left transition-all flex items-center justify-between
-                              ${isSelected 
-                                ? `bg-gradient-to-r ${city.color} text-white shadow-md` 
-                                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                              }
-                            `}
-                          >
-                            <span className="font-medium">{city.name}</span>
-                            {isSelected && <Check className="h-5 w-5" />}
-                          </button>
-                        ) : (
-                          isSelected && (
-                            <div
-                              key={city.id}
-                              className={`w-full p-3 rounded-lg bg-gradient-to-r ${city.color} text-white shadow-md`}
-                            >
-                              <span className="font-medium">{city.name}</span>
+                      {isAdmin ? (
+                        // Admin view: show all cities as toggleable buttons
+                        CITIES.map((city) => {
+                          const entry = getEntriesForDate(selectedDate).find(e => e.cityId === city.id)
+                          const isSelected = !!entry
+                          
+                          return (
+                            <div key={city.id}>
+                              <button
+                                onClick={() => toggleCity(city.id)}
+                                className={`
+                                  w-full p-3 rounded-lg text-left transition-all flex items-center justify-between
+                                  ${isSelected 
+                                    ? `bg-gradient-to-r ${city.color} text-white shadow-md` 
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                  }
+                                `}
+                              >
+                                <span className="font-medium">{city.name}</span>
+                                {isSelected && <Check className="h-5 w-5" />}
+                              </button>
+                              {isSelected && entry && (
+                                <div className="mt-2 ml-2 space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <Clock className="h-4 w-4 text-slate-400" />
+                                    <input
+                                      type="text"
+                                      value={entry.time}
+                                      onChange={(e) => updateEntryTime(city.id, e.target.value)}
+                                      placeholder="Time (e.g., 19:00 or During game)"
+                                      className="flex-1 px-2 py-1 text-sm border rounded bg-white dark:bg-slate-700 dark:border-slate-600"
+                                    />
+                                  </div>
+                                  <textarea
+                                    value={entry.note}
+                                    onChange={(e) => updateEntryNote(city.id, e.target.value)}
+                                    placeholder="Note (e.g., Match details)"
+                                    className="w-full px-2 py-1 text-sm border rounded bg-white dark:bg-slate-700 dark:border-slate-600"
+                                    rows={2}
+                                  />
+                                </div>
+                              )}
                             </div>
                           )
+                        })
+                      ) : (
+                        // User view: show only scheduled entries with details
+                        getEntriesForDate(selectedDate).length > 0 ? (
+                          getEntriesForDate(selectedDate).map((entry) => {
+                            const city = CITIES.find(c => c.id === entry.cityId)
+                            if (!city) return null
+                            return (
+                              <div
+                                key={entry.cityId}
+                                className={`w-full p-3 rounded-lg bg-gradient-to-r ${city.color} text-white shadow-md`}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="font-medium">{city.name}</span>
+                                  <span className="text-sm opacity-90">{entry.time}</span>
+                                </div>
+                                {entry.note && (
+                                  <p className="text-sm mt-1 opacity-90">{entry.note}</p>
+                                )}
+                              </div>
+                            )
+                          })
+                        ) : (
+                          <p className="text-slate-500 dark:text-slate-400 text-center py-4">
+                            No mascot appearances scheduled for this date.
+                          </p>
                         )
-                      })}
-                      {!isAdmin && getCitiesForDate(selectedDate).length === 0 && (
-                        <p className="text-slate-500 dark:text-slate-400 text-center py-4">
-                          No mascot appearances scheduled for this date.
-                        </p>
                       )}
                     </div>
                   </>
@@ -317,36 +374,56 @@ export function MascotSchedule({ onBack, isAdmin = false, userEmail }: MascotSch
                 <p>Loading schedule...</p>
               </div>
             ) : totalAppearances > 0 ? (
-              <div className="space-y-3">
-                {DATES.filter(date => getCitiesForDate(date).length > 0).map((date) => {
-                  const cities = getCitiesForDate(date)
-                  
-                  return (
-                    <div 
-                      key={date.toISOString()}
-                      className="flex items-start gap-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg"
-                    >
-                      <div className="min-w-[120px] font-medium text-slate-700 dark:text-slate-300">
-                        {formatDate(date)}
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {cities.map(cityId => {
-                          const city = CITIES.find(c => c.id === cityId)
-                          if (!city) return null
-                          
-                          return (
-                            <span 
-                              key={cityId}
-                              className={`px-3 py-1 rounded-full text-sm text-white bg-gradient-to-r ${city.color}`}
-                            >
-                              {city.name}
-                            </span>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )
-                })}
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200 dark:border-slate-700">
+                      <th className="text-left py-2 px-3 font-semibold text-slate-700 dark:text-slate-300">Date</th>
+                      <th className="text-left py-2 px-3 font-semibold text-slate-700 dark:text-slate-300">Day</th>
+                      <th className="text-left py-2 px-3 font-semibold text-slate-700 dark:text-slate-300">Time</th>
+                      <th className="text-left py-2 px-3 font-semibold text-slate-700 dark:text-slate-300">Fan Zone</th>
+                      <th className="text-left py-2 px-3 font-semibold text-slate-700 dark:text-slate-300">Note</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {DATES.flatMap(date => {
+                      const entries = getEntriesForDate(date)
+                      if (entries.length === 0) return []
+                      
+                      return entries.map((entry) => {
+                        const city = CITIES.find(c => c.id === entry.cityId)
+                        if (!city) return null
+                        
+                        const isSpecial = entry.note.includes('SPECIAL') || entry.note.includes('FINAL')
+                        
+                        return (
+                          <tr 
+                            key={`${date.toISOString()}-${entry.cityId}`}
+                            className={`border-b border-slate-100 dark:border-slate-800 ${isSpecial ? 'bg-amber-50 dark:bg-amber-900/20' : ''}`}
+                          >
+                            <td className="py-2 px-3 text-slate-600 dark:text-slate-400">
+                              {date.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            </td>
+                            <td className="py-2 px-3 text-slate-600 dark:text-slate-400">
+                              {date.toLocaleDateString('en-US', { weekday: 'short' })}
+                            </td>
+                            <td className="py-2 px-3 font-medium text-slate-700 dark:text-slate-300">
+                              {entry.time}
+                            </td>
+                            <td className="py-2 px-3">
+                              <span className={`px-2 py-1 rounded text-xs font-medium text-white bg-gradient-to-r ${city.color}`}>
+                                {city.name}
+                              </span>
+                            </td>
+                            <td className={`py-2 px-3 text-slate-600 dark:text-slate-400 ${isSpecial ? 'font-semibold text-amber-700 dark:text-amber-300' : ''}`}>
+                              {entry.note}
+                            </td>
+                          </tr>
+                        )
+                      })
+                    })}
+                  </tbody>
+                </table>
               </div>
             ) : (
               <div className="text-center py-8 text-slate-500 dark:text-slate-400">
