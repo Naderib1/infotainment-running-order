@@ -9,6 +9,7 @@ import { Auth } from './components/Auth'
 import { PlatformSelector } from './components/PlatformSelector'
 import { FanZoneEditor } from './components/FanZoneEditor'
 import { FanZoneHub } from './components/FanZoneHub'
+import { MascotSchedule } from './components/MascotSchedule'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { useSupabaseData } from './hooks/useSupabaseData'
 import { useAdmin } from './hooks/useAdmin'
@@ -279,6 +280,7 @@ function AppContent() {
   const [showGameManager, setShowGameManager] = useState(false)
   const [showFanZoneEditor, setShowFanZoneEditor] = useState(false)
   const [showNonMatchdayEditor, setShowNonMatchdayEditor] = useState(false)
+  const [showMascotSchedule, setShowMascotSchedule] = useState(false)
   
   const [currentStep, setCurrentStep] = useState(() => {
     if (typeof window === 'undefined') return 1
@@ -516,10 +518,10 @@ function AppContent() {
         <div className="flex items-center bg-white/80 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70 rounded-full shadow-lg backdrop-blur px-1 py-1">
           <button
             type="button"
-            onClick={() => { setCurrentStep(1); setShowGameManager(false); setShowFanZoneEditor(false); setShowNonMatchdayEditor(false) }}
+            onClick={() => { setCurrentStep(1); setShowGameManager(false); setShowFanZoneEditor(false); setShowNonMatchdayEditor(false); setShowMascotSchedule(false) }}
             className={[
               'px-4 py-1.5 text-sm rounded-full transition',
-              currentStep === 1 && !showGameManager && !showFanZoneEditor && !showNonMatchdayEditor
+              currentStep === 1 && !showGameManager && !showFanZoneEditor && !showNonMatchdayEditor && !showMascotSchedule
                 ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow'
                 : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/60'
             ].join(' ')}
@@ -528,10 +530,10 @@ function AppContent() {
           </button>
           <button
             type="button"
-            onClick={() => { setCurrentStep(2); setShowGameManager(false); setShowFanZoneEditor(false); setShowNonMatchdayEditor(false) }}
+            onClick={() => { setCurrentStep(2); setShowGameManager(false); setShowFanZoneEditor(false); setShowNonMatchdayEditor(false); setShowMascotSchedule(false) }}
             className={[
               'px-4 py-1.5 text-sm rounded-full transition',
-              currentStep === 2 && !showGameManager && !showFanZoneEditor && !showNonMatchdayEditor
+              currentStep === 2 && !showGameManager && !showFanZoneEditor && !showNonMatchdayEditor && !showMascotSchedule
                 ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow'
                 : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/60'
             ].join(' ')}
@@ -542,7 +544,7 @@ function AppContent() {
             <>
               <button
                 type="button"
-                onClick={() => { setShowGameManager(true); setShowFanZoneEditor(false); setShowNonMatchdayEditor(false); setAdminSelectedGame(null) }}
+                onClick={() => { setShowGameManager(true); setShowFanZoneEditor(false); setShowNonMatchdayEditor(false); setShowMascotSchedule(false); setAdminSelectedGame(null) }}
                 className={[
                   'px-4 py-1.5 text-sm rounded-full transition',
                   showGameManager
@@ -554,7 +556,7 @@ function AppContent() {
               </button>
               <button
                 type="button"
-                onClick={() => { setShowFanZoneEditor(true); setShowGameManager(false); setShowNonMatchdayEditor(false) }}
+                onClick={() => { setShowFanZoneEditor(true); setShowGameManager(false); setShowNonMatchdayEditor(false); setShowMascotSchedule(false) }}
                 className={[
                   'px-4 py-1.5 text-sm rounded-full transition',
                   showFanZoneEditor && !showNonMatchdayEditor
@@ -566,7 +568,7 @@ function AppContent() {
               </button>
               <button
                 type="button"
-                onClick={() => { setShowNonMatchdayEditor(true); setShowFanZoneEditor(false); setShowGameManager(false) }}
+                onClick={() => { setShowNonMatchdayEditor(true); setShowFanZoneEditor(false); setShowGameManager(false); setShowMascotSchedule(false) }}
                 className={[
                   'px-4 py-1.5 text-sm rounded-full transition',
                   showNonMatchdayEditor
@@ -575,6 +577,18 @@ function AppContent() {
                 ].join(' ')}
               >
                 Non-Matchdays
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShowMascotSchedule(true); setShowNonMatchdayEditor(false); setShowFanZoneEditor(false); setShowGameManager(false) }}
+                className={[
+                  'px-4 py-1.5 text-sm rounded-full transition',
+                  showMascotSchedule
+                    ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/60'
+                ].join(' ')}
+              >
+                Mascot
               </button>
             </>
           )}
@@ -652,7 +666,18 @@ function AppContent() {
         </div>
       )}
 
-      {!showGameManager && !showFanZoneEditor && !showNonMatchdayEditor && currentStep === 1 && (
+      {/* Admin Mascot Schedule */}
+      {showMascotSchedule && isAdmin && (
+        <div className="pt-16">
+          <MascotSchedule
+            onBack={() => setShowMascotSchedule(false)}
+            isAdmin={true}
+            userEmail={user?.email || undefined}
+          />
+        </div>
+      )}
+
+      {!showGameManager && !showFanZoneEditor && !showNonMatchdayEditor && !showMascotSchedule && currentStep === 1 && (
         <CompetitionSetup
           competition={appData.competition}
           onCompetitionChange={handleCompetitionChange}
@@ -660,7 +685,7 @@ function AppContent() {
         />
       )}
 
-      {!showGameManager && !showFanZoneEditor && !showNonMatchdayEditor && currentStep === 2 && (
+      {!showGameManager && !showFanZoneEditor && !showNonMatchdayEditor && !showMascotSchedule && currentStep === 2 && (
         <RunningOrderTemplate
           competition={appData.competition}
           runningOrder={appData.runningOrder}
